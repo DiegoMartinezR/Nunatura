@@ -1,0 +1,214 @@
+
+/* ====================================================
+   PÁGINA DE LOGIN INDIVIDUAL (NUNATURA)
+   ==================================================== */
+
+/* 1. Variables de Color y Sombras */
+.woocommerce-form-login {
+    --nuna-cyan: #0cc;
+    --nuna-orange: #F87612;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* 2. Título Central "Acceder" */
+.woocommerce > h2 {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: #333 !important;
+    margin-bottom: 35px !important;
+    text-align: center !important;
+    font-family: 'Poppins', sans-serif !important;
+    position: relative;
+    padding-bottom: 2px !important;
+}
+
+/* Línea decorativa debajo del título */
+.woocommerce > h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: var(--nuna-cyan);
+    border-radius: 3px;
+}
+
+/* 3. Contenedor del Formulario (Tarjeta Flotante) */
+form.woocommerce-form-login {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    padding: 25px !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+    max-width: 500px !important; /* Mantiene la tarjeta a un ancho elegante */
+    margin: 0 auto !important; /* Centra la tarjeta en la pantalla */
+}
+
+@media (min-width: 450px) {
+    form.woocommerce-form-login {
+        padding: 35px !important;
+    }
+}
+
+/* 4. Etiquetas (Labels) y Asterisco Obligatorio */
+form.woocommerce-form-login label {
+    font-weight: 600 !important;
+    color: #444 !important;
+    font-size: 15px !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+form.woocommerce-form-login label .required {
+    color: var(--nuna-orange) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+/* 5. Cajas de Texto (Usuario y Contraseña) */
+form.woocommerce-form-login .input-text {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important;
+    background-color: #f9fbfc !important;
+    padding: 16px 20px !important;
+    min-height: 52px !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Efecto al hacer clic en los inputs */
+form.woocommerce-form-login .input-text:focus {
+    background-color: #ffffff !important;
+    border-color: var(--nuna-cyan) !important;
+    box-shadow: 0 0 0 4px var(--nuna-cyan-light) !important;
+    outline: none !important;
+}
+
+/* 6. Checkbox de "Recuérdame" */
+form.woocommerce-form-login .woocommerce-form-login__rememberme {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-top: 15px !important;
+    margin-bottom: 25px !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+    cursor: pointer;
+}
+
+form.woocommerce-form-login input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    accent-color: var(--nuna-cyan) !important; /* Pinta el cuadradito de turquesa */
+    cursor: pointer;
+}
+
+/* 7. Gran Botón "Acceso" */
+form.woocommerce-form-login .woocommerce-button {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important; /* Forma de píldora */
+    padding: 16px 20px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    border: none !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 6px 20px var(--nuna-cyan-light) !important;
+    width: 100% !important; /* Ocupa todo el ancho */
+    cursor: pointer !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Animación Hover del Botón (Pasa a Naranja) */
+form.woocommerce-form-login .woocommerce-button:hover {
+    background-color: var(--nuna-orange) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 25px rgba(240, 125, 0, 0.2) !important;
+}
+
+/* 8. Enlace de Recuperar Contraseña */
+form.woocommerce-form-login .lost_password {
+    text-align: center !important;
+    margin-top: 25px !important;
+    margin-bottom: 0 !important;
+}
+
+form.woocommerce-form-login .lost_password a {
+    color: #888 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    text-decoration: underline !important;
+    text-decoration-color: transparent !important;
+    transition: all 0.3s ease !important;
+}
+
+form.woocommerce-form-login .lost_password a:hover {
+    color: var(--nuna-orange) !important;
+    text-decoration-color: var(--nuna-orange) !important; /* Subrayado naranja al pasar el mouse */
+}
+
+/* ====================================================
+   9. RESPONSIVIDAD PARA PANTALLAS ULTRA ANCHAS (>= 1920px)
+   ==================================================== */
+@media (min-width: 1920px) {
+    .woocommerce > h2 { font-size: 32px !important; }
+    form.woocommerce-form-login { max-width: 580px !important; padding: 50px !important; }
+    form.woocommerce-form-login label, 
+    form.woocommerce-form-login .input-text { font-size: 18px !important; }
+    form.woocommerce-form-login .input-text { min-height: 60px !important; padding: 20px 24px !important; }
+    form.woocommerce-form-login .woocommerce-button { font-size: 18px !important; padding: 20px !important; }
+    form.woocommerce-form-login .lost_password a { font-size: 16px !important; }
+}
+
+.woocommerce-LostPassword {
+    display: grid !important;
+}
+
+@media (min-width: 450px) {
+    .woocommerce-LostPassword {
+        display: flex !important;
+        justify-content: space-between !important;
+    }
+}
+/* 8. Contenedor de enlaces inferiores (Contraseña y Registro) */
+#customer_login form.woocommerce-form-login .lost_password {
+    display: flex !important;
+    justify-content: space-between !important; /* Empuja un enlace a cada extremo */
+    align-items: center !important;
+    margin-top: 25px !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+}
+
+/* Estilo general para ambos enlaces */
+#customer_login form.woocommerce-form-login .lost_password a {
+    color: #888 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important; 
+    transition: all 0.3s ease !important;
+}
+
+/* Efecto hover general */
+#customer_login form.woocommerce-form-login .lost_password a:hover {
+    color: var(--nuna-orange) !important;
+    text-decoration: underline !important;
+    text-decoration-color: var(--nuna-orange) !important;
+}
+
+/* Destacar sutilmente el enlace de Crear Cuenta con tu turquesa */
+#customer_login form.woocommerce-form-login .lost_password a.nuna-crear-cuenta-link {
+    color: var(--nuna-cyan) !important;
+    font-weight: 600 !important;
+}
+
+#customer_login form.woocommerce-form-login .lost_password a.nuna-crear-cuenta-link:hover {
+    color: var(--nuna-orange) !important;
+}

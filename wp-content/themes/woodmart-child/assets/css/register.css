@@ -1,0 +1,197 @@
+/* ====================================================
+   PÁGINA DE REGISTRO INDIVIDUAL Y AVISOS (NUNATURA)
+   ==================================================== */
+
+/* 1. Variables de Color y Sombras */
+form.woocommerce-form-register {
+    --nuna-cyan: #0cc;
+    --nuna-orange: #F87612;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* 2. Título Central "Create your new account" / "Registrarse" */
+.woocommerce > h2 {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: #333 !important;
+    margin-bottom: 35px !important;
+    text-align: center !important;
+    font-family: 'Poppins', sans-serif !important;
+    position: relative;
+    padding-bottom: 7.5px !important;
+}
+
+/* Línea decorativa debajo del título */
+.woocommerce > h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: var(--nuna-cyan);
+    border-radius: 3px;
+}
+
+/* 3. Contenedor del Formulario (Tarjeta Flotante) */
+form.woocommerce-form-register {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    padding: 25px !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+    max-width: 500px !important; /* Mantiene la tarjeta a un ancho elegante */
+    margin: 0 auto !important; /* Centra la tarjeta en la pantalla */
+}
+
+@media (min-width: 450px) {
+    form.woocommerce-form-register {
+        padding: 35px !important;
+    }
+}
+
+/* 4. Alertas y Errores (Avisos de WooCommerce) */
+/* Estilos generales compartidos para todas las alertas */
+.woocommerce-notices-wrapper .woocommerce-error,
+.woocommerce-notices-wrapper .woocommerce-message,
+.woocommerce-notices-wrapper .woocommerce-info {
+    margin: 0 auto 25px auto !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    font-size: 15px !important;
+    font-family: 'Poppins', sans-serif !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05) !important;
+    border: none !important;
+    list-style: none !important;
+}
+
+/* 1. ERRORES (.woocommerce-error) - Rojo */
+.woocommerce-notices-wrapper .woocommerce-error {
+    border-left: 5px solid #d63031 !important;
+    background-color: #fff2f2 !important;
+    color: #d63031 !important;
+}
+
+/* 2. ÉXITO / MENSAJES (.woocommerce-message) - Verde */
+.woocommerce-notices-wrapper .woocommerce-message {
+    border-left: 5px solid #00b894 !important;
+    background-color: #e6f9f5 !important;
+    color: #00b894 !important;
+}
+
+/* 3. INFORMACIÓN (.woocommerce-info) - Azul */
+.woocommerce-notices-wrapper .woocommerce-info {
+    border-left: 5px solid #0984e3 !important;
+    background-color: #e8f4fd !important;
+    color: #0984e3 !important;
+}
+
+.woocommerce-notices-wrapper .woocommerce-error li{
+    margin-left: 30px!important;
+}
+
+/* 5. Etiquetas (Labels) y Asterisco Obligatorio */
+form.woocommerce-form-register label {
+    font-weight: 600 !important;
+    color: #444 !important;
+    font-size: 15px !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+form.woocommerce-form-register label .required {
+    color: var(--nuna-orange) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+/* 6. Cajas de Texto (Correo y Contraseña) */
+form.woocommerce-form-register .input-text {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important;
+    background-color: #f9fbfc !important;
+    padding: 16px 20px !important;
+    min-height: 52px !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Efecto al hacer clic en los inputs */
+form.woocommerce-form-register .input-text:focus {
+    background-color: #ffffff !important;
+    border-color: var(--nuna-cyan) !important;
+    box-shadow: 0 0 0 4px var(--nuna-cyan-light) !important;
+    outline: none !important;
+}
+
+/* 7. Texto de Política de Privacidad (Legal) */
+form.woocommerce-form-register .woocommerce-privacy-policy-text {
+    font-size: 13px !important;
+    color: #777 !important;
+    line-height: 1.6 !important;
+    margin-top: 15px !important;
+    margin-bottom: 20px !important;
+    text-align: center !important;
+}
+
+form.woocommerce-form-register .woocommerce-privacy-policy-text a {
+    color: var(--nuna-cyan) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease;
+}
+
+form.woocommerce-form-register .woocommerce-privacy-policy-text a:hover {
+    color: var(--nuna-orange) !important;
+}
+
+/* 8. Gran Botón "Registrarse" */
+form.woocommerce-form-register .woocommerce-button {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important; /* Forma de píldora */
+    padding: 16px 20px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    border: none !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 6px 20px var(--nuna-cyan-light) !important;
+    width: 100% !important; /* Ocupa todo el ancho */
+    cursor: pointer !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+    margin-top: 10px !important;
+}
+
+/* Animación Hover del Botón (Pasa a Naranja) */
+form.woocommerce-form-register .woocommerce-button:hover {
+    background-color: var(--nuna-orange) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 25px rgba(240, 125, 0, 0.2) !important;
+}
+
+/* ====================================================
+   9. RESPONSIVIDAD PARA PANTALLAS ULTRA ANCHAS (>= 1920px)
+   ==================================================== */
+@media (min-width: 1920px) {
+    .woocommerce > h2 { font-size: 32px !important; }
+    form.woocommerce-form-register { max-width: 580px !important; padding: 50px !important; }
+    form.woocommerce-form-register label, 
+    form.woocommerce-form-register .input-text { font-size: 18px !important; }
+    form.woocommerce-form-register .input-text { min-height: 60px !important; padding: 20px 24px !important; }
+    form.woocommerce-form-register .woocommerce-button { font-size: 18px !important; padding: 20px !important; }
+    form.woocommerce-form-register .woocommerce-privacy-policy-text { font-size: 15px !important; }
+    
+    /* Adaptar los avisos al mismo ancho que la tarjeta expandida */
+    .woocommerce-notices-wrapper .woocommerce-error,
+    .woocommerce-notices-wrapper .woocommerce-message,
+    .woocommerce-notices-wrapper .woocommerce-info {
+        max-width: 580px !important;
+        font-size: 16px !important;
+    }
+}

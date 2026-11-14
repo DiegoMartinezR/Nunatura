@@ -1,0 +1,1 @@
+2026-10-28T05:15:56+00:00 WARNING Email "customer_new_account" for user #14 failed to send: ErrorSendAsDenied: The user account which was used to submit this request does not have the right to send mail on behalf of the specified sending account., Cannot submit message. CONTEXT: {"email_type":"customer_new_account","status":"failed","recipient":"grecia22.laroal","user":14}

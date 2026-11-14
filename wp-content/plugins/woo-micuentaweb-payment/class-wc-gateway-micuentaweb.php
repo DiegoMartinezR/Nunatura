@@ -1,0 +1,2909 @@
+<?php
+/**
+ * Copyright © Lyra Network and contributors.
+ * This file is part of Izipay plugin for WooCommerce. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @author    Geoffrey Crofte, Alsacréations (https://www.alsacreations.fr/)
+ * @copyright Lyra Network and contributors
+ * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL v2)
+ */
+
+if (! defined('ABSPATH')) {
+    exit; // Exit if accessed directly.
+}
+
+use Automattic\Jetpack\Constants;
+use Lyranetwork\Micuentaweb\Sdk\Form\Api as MicuentawebApi;
+use Lyranetwork\Micuentaweb\Sdk\Form\Response as MicuentawebResponse;
+use Lyranetwork\Micuentaweb\Sdk\Form\Request as MicuentawebRequest;
+use Lyranetwork\Micuentaweb\Sdk\Rest\Api as MicuentawebRest;
+
+class WC_Gateway_Micuentaweb extends WC_Payment_Gateway
+{
+    const GATEWAY_CODE = 'Mi_Cuenta_Web';
+    const GATEWAY_NAME = 'Izipay';
+    const BACKOFFICE_NAME = 'Izipay';
+    const GATEWAY_URL = 'gatewayUrl';
+    const REST_URL = 'restUrl';
+    const STATIC_URL = 'staticUrl';
+    const LOGO_URL = 'logoUrl';
+    const SITE_ID = '12345678';
+    const KEY_TEST = '1111111111111111';
+    const KEY_PROD = '2222222222222222';
+    const CTX_MODE = 'TEST';
+    const SIGN_ALGO = 'SHA-256';
+    const LANGUAGE = 'es';
+
+    const CMS_IDENTIFIER = 'WooCommerce_2.x-10.x';
+    const SUPPORT_EMAIL = 'soporte@micuentaweb.pe';
+    const PLUGIN_VERSION = '1.18.3';
+    const GATEWAY_VERSION = 'V2';
+
+    const METHOD_ID = 'micuentaweb_method_id';
+    const LOG_FOLDER = 'wp-content/uploads/wc-logs/';
+
+    protected $admin_page;
+    protected $admin_link;
+
+    protected $general_settings = array();
+    protected $general_form_fields = array();
+    protected $notices = array();
+
+    /**
+     * @var WC_Logger
+     */
+    protected $logger;
+
+    /**
+     * @var bool
+     */
+    protected $testmode;
+
+    /**
+     * @var bool
+     */
+    protected $debug;
+
+    /**
+     * @var MicuentawebRequest
+     */
+    protected $micuentaweb_request;
+
+    public function __construct()
+    {
+        $this->id = 'micuentaweb';
+        $this->has_fields = false;
+        $this->method_title = self::GATEWAY_NAME . ' - ' . __('General configuration', 'woo-micuentaweb-payment');
+
+        // Init common vars.
+        $this->micuentaweb_init();
+
+        // Load the form fields.
+        $this->init_form_fields();
+
+        // Load the module settings.
+        $this->init_settings();
+
+        $this->title = __('General configuration', 'woo-micuentaweb-payment');
+        $this->enabled = false;
+        $this->testmode = ($this->get_general_option('ctx_mode') == 'TEST');
+        $this->debug = ($this->get_general_option('debug') == 'yes') ? true : false;
+
+        if ($this->micuentaweb_is_section_loaded()) {
+            // Adding style to admin form action.
+            add_action('admin_head-woocommerce_page_' . $this->admin_page, array($this, 'micuentaweb_admin_head_style'));
+
+            // Adding JS to admin form action.
+            add_action('admin_head-woocommerce_page_' . $this->admin_page, array($this, 'micuentaweb_admin_head_script'));
+
+            // Update admin form action.
+            add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
+        }
+
+        // Return from payment gateway action.
+        add_action('woocommerce_api_wc_gateway_micuentaweb', array($this, 'micuentaweb_notify_response'));
+
+        // Filter to allow order status override.
+        add_filter('woocommerce_payment_complete_order_status', array($this, 'micuentaweb_complete_order_status'), 10, 2);
+
+        // Customize email.
+        add_action('woocommerce_email_after_order_table', array($this, 'micuentaweb_add_order_email_payment_result'), 10, 3);
+
+        // Print our notices.
+        add_action('woocommerce_before_template_part', array($this, 'micuentaweb_notices'), 10, 4);
+        add_action('woocommerce_before_thankyou', array($this, 'micuentaweb_thankyou'), 10, 4);
+        add_action('woocommerce_before_cart', array(__CLASS__, 'restore_wc_notices'), 10, 4);
+
+        // Delete saved means of payment and saved identifier.
+        add_action('woocommerce_api_wc_gateway_micuentaweb_delete_saved_identifier', array($this, 'micuentaweb_delete_saved_identifier'));
+
+        // Delete order on failed payment.
+        add_action('woocommerce_order_status_changed', array($this, 'micuentaweb_delete_order_with_status_failed'), 10, 1);
+
+        // Filter to allow customer saved payment means management.
+        add_filter('woocommerce_saved_payment_methods_list', array($this, 'micuentaweb_get_account_saved_payment_methods_list'), 10, 2);
+    }
+
+    protected function micuentaweb_is_section_loaded()
+    {
+        $current_section = isset($_GET['section']) ? $_GET['section'] : null;
+        if (is_null($current_section)) {
+            return false;
+        }
+
+        return ($current_section === $this->id) || (strtolower($current_section) === strtolower(get_class($this)));
+    }
+
+    protected function micuentaweb_init()
+    {
+        $this->logger = new WC_Logger();
+
+        // Init API.
+        $this->micuentaweb_request = new MicuentawebRequest();
+
+        if ($this->micuentaweb_is_section_loaded()) {
+            $this->admin_page = $_GET['page'];
+
+            $this->admin_link = admin_url('admin.php?page=' . $_GET['page'] . '&tab=' . $_GET['tab'] . '&section=' . $_GET['section']);
+        }
+    }
+
+    public function micuentaweb_admin_head_style()
+    {
+        ?>
+        <style>
+            .micuentaweb p.description {
+                color: #0073aa !important;
+                font-style: normal !important;
+            }
+
+            #woocommerce_micuentaweb_url_check + p.description span.url {
+                color: #23282d !important;
+                font-size: 16px;
+                font-weight: bold;
+            }
+
+            #woocommerce_micuentaweb_url_check + p.description span.desc {
+                color: red !important;
+            }
+
+            #woocommerce_micuentaweb_url_check + p.description img {
+                vertical-align: middle;
+                margin-right: 5px;
+            }
+
+            #woocommerce_micuentaweb_rest_check_url + p.description span.url {
+                color: #23282d !important;
+                font-size: 16px;
+                font-weight: bold;
+            }
+
+            #woocommerce_micuentaweb_rest_check_url + p.description span.desc {
+                color: red !important;
+                display: inline-block;
+            }
+
+            #woocommerce_micuentaweb_rest_check_url + p.description img {
+                margin-right: 5px;
+            }
+        </style>
+        <?php
+    }
+
+    public function micuentaweb_admin_head_script()
+    {
+        ?>
+        <script type="text/javascript">
+        //<!--
+            jQuery(function() {
+                micuentawebUpdateCategoryDisplay();
+                micuentawebUpdateShippingOptionsDisplay();
+            });
+
+            function micuentawebUpdateCategoryDisplay() {
+                var commonCategory = jQuery('#<?php echo esc_attr($this->get_field_key('common_category')); ?> option:selected').val();
+                var categoryMapping = jQuery('#<?php echo esc_attr($this->get_field_key('category_mapping')); ?>_table').closest('tr');
+
+                if (commonCategory === 'CUSTOM_MAPPING') {
+                    categoryMapping.show();
+                } else {
+                    categoryMapping.hide();
+                }
+            }
+
+            function micuentawebUpdateShippingOptionsDisplay(speedElementId = null) {
+                // Enable delay select for rows with speed equals PRIORITY.
+
+                if  (speedElementId == null) {
+                    // Update display on page loading.
+                     var elements = jQuery(".micuentaweb_list_speed");
+                     for (var i=0; i < elements.length; i++) {
+                         var speedElt = elements.eq(i);
+                         var delayName = speedElt.attr("name").replace("[speed]", "[delay]");
+
+                         // Select by name returns one element.
+                         var delayElt = jQuery("select[name=\"" + delayName + "\"]")[0];
+
+                         if (speedElt.val() === "PRIORITY") {
+                             delayElt.disabled = false;
+                         } else {
+                            delayElt.disabled = true;
+                         }
+                     }
+                } else {
+                    // Update display on element update.
+                    var delayElementId = speedElementId.replace("speed", "delay");
+
+                    if (jQuery('#' + speedElementId + ' option:selected').val() === "PRIORITY") {
+                        jQuery('#' + delayElementId).prop("disabled", false);
+                    } else {
+                        jQuery('#' + delayElementId).prop("disabled", true);
+                    }
+                }
+            }
+        //-->
+        </script>
+        <?php
+    }
+
+    /**
+     * Admin panel options.
+     */
+    public function admin_options()
+    {
+        if (! $this->is_supported_currency()) {
+            echo '<div class="inline error"><p><strong>' . __('Gateway disabled', 'woo-micuentaweb-payment') . ': ' . sprintf(__('%s does not support your store currency.', 'woo-micuentaweb-payment'), self::GATEWAY_NAME) . '</strong></p></div>';
+        }
+        ?>
+        <br />
+        <h3><?php echo self::GATEWAY_NAME; ?></h3>
+        <p><?php echo sprintf(__('The module works by sending users to %s in order to select their payment mean and enter their payment information.', 'woo-micuentaweb-payment'), self::GATEWAY_NAME); ?></p>
+
+        <?php foreach ($this->notices as $notice) { ?>
+            <p style="background: none repeat scroll 0 0 #FFFFE0; border: 1px solid #E6DB55; margin: 0 0 20px; padding: 10px; font-weight: bold;"><?php echo $notice; ?></p>
+        <?php } ?>
+
+        <section class="micuentaweb">
+            <table class="form-table">
+                <?php $this->generate_settings_html(); // Generate the HTML For the settings form. ?>
+            </table>
+        </section>
+
+        <?php
+    }
+
+    protected function get_supported_languages()
+    {
+        $langs = array();
+
+        foreach (MicuentawebApi::getSupportedLanguages() as $code => $label) {
+            $langs[$code] = __($label, 'woo-micuentaweb-payment');
+        }
+
+        return $langs;
+    }
+
+    protected function get_validation_modes($is_general_settings = false)
+    {
+        $modes = array(
+            '-1' => sprintf(__('%s general configuration', 'woo-micuentaweb-payment'), self::GATEWAY_NAME),
+            ' ' => sprintf(__('%s Back Office configuration', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME),
+            '0' => __('Automatic', 'woo-micuentaweb-payment'),
+            '1' => __('Manual', 'woo-micuentaweb-payment')
+        );
+
+        if ($is_general_settings) {
+            unset($modes['-1']);
+        }
+
+        return $modes;
+    }
+
+    protected function get_gateway_categories($no_select_opt = true)
+    {
+        $categories = array(
+            'FOOD_AND_GROCERY' => __('Food and grocery', 'woo-micuentaweb-payment'),
+            'AUTOMOTIVE' => __('Automotive', 'woo-micuentaweb-payment'),
+            'ENTERTAINMENT' => __('Entertainment', 'woo-micuentaweb-payment'),
+            'HOME_AND_GARDEN' => __('Home and garden', 'woo-micuentaweb-payment'),
+            'HOME_APPLIANCE' => __('Home appliance', 'woo-micuentaweb-payment'),
+            'AUCTION_AND_GROUP_BUYING' => __('Auction and group buying', 'woo-micuentaweb-payment'),
+            'FLOWERS_AND_GIFTS' => __('Flowers and gifts', 'woo-micuentaweb-payment'),
+            'COMPUTER_AND_SOFTWARE' => __('Computer and software', 'woo-micuentaweb-payment'),
+            'HEALTH_AND_BEAUTY' => __('Health and beauty', 'woo-micuentaweb-payment'),
+            'SERVICE_FOR_INDIVIDUAL' => __('Service for individual', 'woo-micuentaweb-payment'),
+            'SERVICE_FOR_BUSINESS' => __('Service for business', 'woo-micuentaweb-payment'),
+            'SPORTS' => __('Sports', 'woo-micuentaweb-payment'),
+            'CLOTHING_AND_ACCESSORIES' => __('Clothing and accessories', 'woo-micuentaweb-payment'),
+            'TRAVEL' => __('Travel', 'woo-micuentaweb-payment'),
+            'HOME_AUDIO_PHOTO_VIDEO' => __('Home audio, photo, video', 'woo-micuentaweb-payment'),
+            'TELEPHONY' => __('Telephony', 'woo-micuentaweb-payment')
+        );
+
+        if ($no_select_opt) {
+            return $categories;
+        } else {
+            return array_merge(
+                array(
+                    '' => '---',
+                    'CUSTOM_MAPPING' => __('(Use category mapping below)', 'woo-micuentaweb-payment'),
+                ),
+                $categories
+            );
+        }
+    }
+
+    protected function get_method_title_field_description()
+    {
+        return __('Method title to display on payment means page.', 'woo-micuentaweb-payment');
+    }
+
+    protected function get_method_description_field_description()
+    {
+        return __('This controls the description which the user sees during checkout.', 'woo-micuentaweb-payment');
+    }
+
+    /**
+     * Get description function.
+     *
+     * @access public
+     * @return string
+     */
+
+    public function get_description()
+    {
+        $description = $this->get_option('description');
+
+        if (is_array($description)) {
+            $description = isset($description[get_locale()]) && $description[get_locale()] ? $description[get_locale()] : $description['en_US'];
+        }
+
+        return apply_filters('woocommerce_gateway_description', $description, $this->id);
+    }
+
+    /**
+     * Initialise gateway settings form fields.
+     */
+    public function init_form_fields()
+    {
+        global $woocommerce, $micuentaweb_plugin_features;
+
+        // Get log folder path.
+        $log_folder = trailingslashit(Constants::get_constant('WC_LOG_DIR'));
+        if (! $log_folder) {
+            $log_folder = self::LOG_FOLDER;
+        }
+
+        $log_folder = str_replace('\\', '/', $log_folder);
+
+        // Get relative path.
+        $base_dir = str_replace('\\', '/', ABSPATH);
+        if (strpos($log_folder, $base_dir) === 0) {
+            $log_folder = str_replace($base_dir, '', $log_folder);
+        } else {
+            $base_dir = str_replace('\\', '/', dirname(ABSPATH));
+            $log_folder = str_replace($base_dir, '..', $log_folder);
+        }
+
+        // Get documentation links.
+        $languages = array(
+            'fr' => 'Français',
+            'en' => 'English',
+            'es' => 'Español',
+            'pt' => 'Português'
+            // Complete when other languages are managed.
+        );
+
+        $docs = __('Click to view the module configuration documentation: ', 'woo-micuentaweb-payment');
+
+        foreach (MicuentawebApi::getOnlineDocUri(MicuentawebTools::get_white_label()) as $lang => $docUri) {
+            $docs .= '<a style="margin-left: 10px; text-decoration: none; text-transform: uppercase;" href="' . $docUri . 'woocommerce/sitemap.html" target="_blank">' . $languages[$lang] . '</a>';
+        }
+
+        $module_info_fields = array(
+            // Module information.
+            'module_details' => array(
+                'title' => __('MODULE DETAILS', 'woo-micuentaweb-payment'),
+                'type' => 'title'
+            ),
+            'developed_by' => array(
+                'title' => __('Developed by', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'description' => '<b><a href="https://www.lyra.com/" target="_blank">Lyra Network</a></b>',
+                'css' => 'display: none;'
+            ),
+            'contact' => array(
+                'title' => __('Contact us', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'description' => '<b>' . MicuentawebApi::formatSupportEmails(self::SUPPORT_EMAIL) . '</b>',
+                'css' => 'display: none;'
+            ),
+            'contrib_version' => array(
+                'title' => __('Module version', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'description' => self::PLUGIN_VERSION,
+                'css' => 'display: none;'
+            ),
+            'platform_version' => array(
+                'title' => __('Gateway version', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'description' => self::GATEWAY_VERSION,
+                'css' => 'display: none;'
+            ),
+            'doc_link' => array(
+                'title' => $docs,
+                'type' => 'label',
+                'css' => 'font-weight: bold; color: red; cursor: auto !important; text-transform: uppercase;'
+            ),
+
+            'base_settings' => array(
+                'title' => __('BASE SETTINGS', 'woo-micuentaweb-payment'),
+                'type' => 'title'
+            ),
+            'debug' => array(
+                'title' => __('Logs', 'woo-micuentaweb-payment'),
+                'label' => __('Enable / disable', 'woo-micuentaweb-payment'),
+                'type' => 'checkbox',
+                'default' => 'yes',
+                'description' => sprintf(__('Enable / disable module logs. The log file will be inside <code>%s</code>.', 'woo-micuentaweb-payment'), $log_folder),
+            ),
+
+            // Payment gateway access params.
+            'payment_gateway_access' => array(
+                'title' => __('PAYMENT GATEWAY ACCESS', 'woo-micuentaweb-payment'),
+                'type' => 'title'
+            )
+        );
+
+        if (($micuentaweb_plugin_features['whitelabelall'] ?? false)) {
+            $module_info_fields['white_label'] = array(
+                'title' => __('Domain', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => MicuentawebTools::get_default_white_label(),
+                'options' => Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel::getWhiteLabels(),
+                'class' => 'wc-enhanced-select'
+            );
+        }
+
+        $gateway_config_fields = array(
+            'site_id' => array(
+                'title' => __('Shop ID', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => self::SITE_ID,
+                'description' => sprintf(__('The identifier provided by %s.', 'woo-micuentaweb-payment'), self::GATEWAY_NAME),
+                'custom_attributes' => array('autocomplete' => 'off')
+            ),
+            'key_test' => array(
+                'title' => __('Key in test mode', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => self::KEY_TEST,
+                'description' => sprintf(__('Key provided by %s for test mode (available in %s Back Office).', 'woo-micuentaweb-payment'), self::GATEWAY_NAME, self::BACKOFFICE_NAME),
+                'custom_attributes' => array('autocomplete' => 'off')
+            ),
+            'key_prod' => array(
+                'title' => __('Key in production mode', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => self::KEY_PROD,
+                'description' => sprintf(__('Key provided by %s (available in %s Back Office after enabling production mode).', 'woo-micuentaweb-payment'), self::GATEWAY_NAME, self::BACKOFFICE_NAME),
+                'custom_attributes' => array('autocomplete' => 'off')
+            ),
+            'ctx_mode' => array(
+                'title' => __('Mode', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => self::CTX_MODE,
+                'options' => array(
+                    'TEST' => __('TEST', 'woo-micuentaweb-payment'),
+                    'PRODUCTION' => __('PRODUCTION', 'woo-micuentaweb-payment')
+                ),
+                'description' => __('The context mode of this module.', 'woo-micuentaweb-payment'),
+                'class' => 'wc-enhanced-select'
+            ),
+            'sign_algo' => array(
+                'title' => __('Signature algorithm', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => self::SIGN_ALGO,
+                'options' => array(
+                    MicuentawebApi::ALGO_SHA1 => 'SHA-1',
+                    MicuentawebApi::ALGO_SHA256 => 'HMAC-SHA-256'
+                ),
+                'description' => sprintf(__('Algorithm used to compute the payment form signature. Selected algorithm must be the same as one configured in the %s Back Office.<br /><b>The HMAC-SHA-256 algorithm should not be activated if it is not yet available in the %s Back Office, the feature will be available soon.</b>', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME, self::BACKOFFICE_NAME),
+                'class' => 'wc-enhanced-select'
+            ),
+            'url_check' => array(
+                'title' => __('Instant Payment Notification URL', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'description' => '<span class="url">' . add_query_arg('wc-api', 'WC_Gateway_Micuentaweb', network_home_url('/')) . '</span><br />' .
+                    '<img src="' . esc_url(WC_MICUENTAWEB_PLUGIN_URL . 'assets/images/warn.png') . '"><span class="desc">' . sprintf(__('URL to copy into your %s Back Office > Settings > Notification rules.', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME) . '</span>',
+                'css' => 'display: none;'
+            ),
+
+            // Add REST API key fields.
+            'rest_settings' => array(
+                'title' => __('REST API keys', 'woo-micuentaweb-payment'),
+                'type' => 'title',
+                'description' => sprintf(__('REST API keys are available in your %s Back Office (menu: Settings > Shops > REST API keys).<br><br>Configure this section if you are using order operations from WooCommerce Back Office, if you are using embedded payment fields modes or if you are proposing subscription payment with WooCommerce Subscriptions.', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME),
+             ),
+             'test_private_key' => array(
+                 'title' => __('Test password', 'woo-micuentaweb-payment'),
+                 'type' => 'password',
+                 'default' => '',
+                 'custom_attributes' => array('autocomplete' => 'off')
+             ),
+             'prod_private_key' => array(
+                 'title' => __('Production password', 'woo-micuentaweb-payment'),
+                 'type' => 'password',
+                 'default' => '',
+                 'custom_attributes' => array('autocomplete' => 'off')
+             ),
+            'embedded_fields_keys_settings' => array(
+                'title' => '',
+                'type' => 'title',
+                'description' => sprintf(__('Configure this section only if you are using embedded payment fields modes.', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME)
+            ),
+             'test_public_key' => array(
+                 'title' => __('Public test key', 'woo-micuentaweb-payment'),
+                 'type' => 'text',
+                 'default' => '',
+                 'custom_attributes' => array('autocomplete' => 'off')
+             ),
+             'prod_public_key' => array(
+                 'title' => __('Public production key', 'woo-micuentaweb-payment'),
+                 'type' => 'text',
+                 'default' => '',
+                 'custom_attributes' => array('autocomplete' => 'off')
+             ),
+             'test_return_key' => array(
+                 'title' => __('HMAC-SHA-256 test key', 'woo-micuentaweb-payment'),
+                 'type' => 'password',
+                 'default' => '',
+                 'custom_attributes' => array('autocomplete' => 'off')
+             ),
+             'prod_return_key' => array(
+                 'title' => __('HMAC-SHA-256 production key', 'woo-micuentaweb-payment'),
+                 'type' => 'password',
+                 'default' => '',
+                 'custom_attributes' => array('autocomplete' => 'off')
+             ),
+            'rest_check_url' => array(
+                'title' => __('API REST Notification URL', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => '',
+                'description' => '<span class="url">' . add_query_arg('wc-api', 'WC_Gateway_Micuentaweb_Notify_Rest', network_home_url('/')). '</span><br />' .
+                '<img src="' . esc_url(WC_MICUENTAWEB_PLUGIN_URL . 'assets/images/warn.png') . '"><span class="desc">' . sprintf(__('URL to copy into your %s Back Office > Settings > Notification rules.<br>In multistore mode, notification URL is the same for all the stores.', 'woo-micuentaweb-payment'), self::GATEWAY_NAME). '</span>',
+                'css' => 'display: none;'
+            ),
+
+            // Payment page params.
+            'payment_page' => array(
+                'title' => __('PAYMENT PAGE', 'woo-micuentaweb-payment'),
+                'type' => 'title'
+            ),
+            'language' => array(
+                'title' => __('Default language', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => self::LANGUAGE,
+                'options' => $this->get_supported_languages(),
+                'description' => __('Default language on the payment page.', 'woo-micuentaweb-payment'),
+                'class' => 'wc-enhanced-select'
+            ),
+            'available_languages' => array(
+                'title' => __('Available languages', 'woo-micuentaweb-payment'),
+                'type' => 'multiselect',
+                'default' => array(),
+                'options' => $this->get_supported_languages(),
+                'description' => __('Languages available on the payment page. If you do not select any, all the supported languages will be available.', 'woo-micuentaweb-payment'),
+                'class' => 'wc-enhanced-select'
+            ),
+            'capture_delay' => array(
+                'title' => __('Capture delay', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => '',
+                'description' => sprintf(__('The number of days before the bank capture (adjustable in your %s Back Office).', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME)
+            ),
+            'validation_mode' => array(
+                'title' => __('Validation mode', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => '',
+                'options' => $this->get_validation_modes(true),
+                'description' => sprintf(__('If manual is selected, you will have to confirm payments manually in your %s Back Office.', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME),
+                'class' => 'wc-enhanced-select'
+            ),
+
+            // Selective 3DS.
+            'selective_3ds' => array(
+                'title' => __('CUSTOM 3DS', 'woo-micuentaweb-payment'),
+                'type' => 'title'
+            ),
+            '3ds_min_amount' => array(
+                'title' => __('Manage 3DS', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => '',
+                'description' => __('Amount below which customer could be exempt from strong authentication. Needs subscription to «Selective 3DS1» or «Frictionless 3DS2» options. For more information, refer to the module documentation.', 'woo-micuentaweb-payment')
+            ),
+
+            // Return to store params.
+            'return_options' => array(
+                'title' => __('RETURN OPTIONS', 'woo-micuentaweb-payment'),
+                'type' => 'title'
+            ),
+            'redirect_enabled' => array(
+                'title' => __('Automatic redirection', 'woo-micuentaweb-payment'),
+                'label' => __('Enable / disable', 'woo-micuentaweb-payment'),
+                'type' => 'checkbox',
+                'default' => 'no',
+                'description' => __('If enabled, the buyer is automatically redirected to your site at the end of the payment.', 'woo-micuentaweb-payment')
+            ),
+            'redirect_success_timeout' => array(
+                'title' => __('Redirection timeout on success', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => '5',
+                'description' => __('Time in seconds (0-300) before the buyer is automatically redirected to your website after a successful payment.', 'woo-micuentaweb-payment')
+            ),
+            'redirect_success_message' => array(
+                'title' => __('Redirection message on success', 'woo-micuentaweb-payment'),
+                'type' => 'multilangtext',
+                'default' => array(
+                    'en_US' => 'Redirection to shop in a few seconds...',
+                    'en_GB' => 'Redirection to shop in a few seconds...',
+                    'fr_FR' => 'Redirection vers la boutique dans quelques instants...',
+                    'de_DE' => 'Weiterleitung zum Shop in Kürze...',
+                    'es_ES' => 'Redirección a la tienda en unos momentos...',
+                    'pt_BR' => 'Redirecionamento para a loja em poucos segundos...'
+                ),
+                'description' => __('Message displayed on the payment page prior to redirection after a successful payment.', 'woo-micuentaweb-payment'),
+                'css' => 'width: 35em;'
+            ),
+            'redirect_error_timeout' => array(
+                'title' => __('Redirection timeout on failure', 'woo-micuentaweb-payment'),
+                'type' => 'text',
+                'default' => '5',
+                'description' => __('Time in seconds (0-300) before the buyer is automatically redirected to your website after a declined payment.', 'woo-micuentaweb-payment')
+            ),
+            'redirect_error_message' => array(
+                'title' => __('Redirection message on failure', 'woo-micuentaweb-payment'),
+                'type' => 'multilangtext',
+                'default' => array(
+                    'en_US' => 'Redirection to shop in a few seconds...',
+                    'en_GB' => 'Redirection to shop in a few seconds...',
+                    'fr_FR' => 'Redirection vers la boutique dans quelques instants...',
+                    'de_DE' => 'Weiterleitung zum Shop in Kürze...',
+                    'es_ES' => 'Redirección a la tienda en unos momentos...',
+                    'pt_BR' => 'Redirecionamento para a loja em poucos segundos...'
+                ),
+                'description' => __('Message displayed on the payment page prior to redirection after a declined payment.', 'woo-micuentaweb-payment'),
+                'css' => 'width: 35em;'
+            ),
+            'return_mode' => array(
+                'title' => __('Return mode', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => 'POST',
+                'options' => array(
+                    'GET' => 'GET',
+                    'POST' => 'POST'
+                ),
+                'description' => __('Method that will be used for transmitting the payment result from the payment page to your shop.', 'woo-micuentaweb-payment'),
+                'class' => 'wc-enhanced-select'
+            ),
+            'order_status_on_success' => array(
+                'title' => __('Order Status', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'default' => 'default',
+                'options' => self::get_success_order_statuses(true),
+                'description' => __('Defines the status of orders paid with this payment mode.', 'woo-micuentaweb-payment'),
+                'class' => 'wc-enhanced-select'
+            ),
+            'delete_order_on_failure' => array(
+                'title' => __('Delete order on failure', 'woo-micuentaweb-payment'),
+                'label' => __('Enable / disable', 'woo-micuentaweb-payment'),
+                'type' => 'checkbox',
+                'default' => 'no',
+                'description' => __('If enabled, the order will be deleted on WooCommerce when the payment is declined.', 'woo-micuentaweb-payment')
+            ),
+
+            // Additional options.
+            'additional_options' => array(
+                'title' => __('ADDITIONAL OPTIONS', 'woo-micuentaweb-payment'),
+                'type' => 'title',
+                'description' => __('Configure this section if you are using advanced risk assessment module or if you are proposing payment means requiring cart data (Franfinance or Klarna).', 'woo-micuentaweb-payment')
+            ),
+            'common_category' => array(
+                'custom_attributes' => array(
+                    'onchange' => 'micuentawebUpdateCategoryDisplay()'
+                ),
+                'title' => __('Category mapping', 'woo-micuentaweb-payment'),
+                'type' => 'select',
+                'options' => $this->get_gateway_categories(false),
+                'description' => __('Use the same category for all products.', 'woo-micuentaweb-payment'),
+                'default' => '',
+                'class' => 'wc-enhanced-select'
+            ),
+        );
+
+        $this->form_fields = array_merge($module_info_fields, $gateway_config_fields);
+
+        $columns['label'] = array(
+            'title' => __('Product category', 'woo-micuentaweb-payment'),
+            'width' => '154px'
+        );
+
+        $columns['category'] = array(
+            'title' => sprintf(__('%s category', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME),
+            'width' => '154px'
+        );
+
+        $this->form_fields['category_mapping'] = array(
+            'type' => 'category_mapping',
+            'columns' => $columns,
+            'description' => sprintf(__('Match each product category with a %s product category. <br /><b>Entries marked with * are newly added and must be configured.</b>', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME)
+        );
+
+        // Delivery options.
+        $descr = sprintf(__('Define the %s information about all shipping methods.<br /><b>Method title: </b>The label of the shipping method.<br /><b>Type: </b>The delivery type of shipping method.<br /><b>Rapidity: </b>Select the delivery rapidity.<br /><b>Delay: </b>Select the delivery delay if rapidity is &laquo; Priority &raquo;.<br /><b>Entries marked with * are newly added and must be configured.</b>',
+            'woo-micuentaweb-payment'), 'Izipay');
+
+        $columns = array();
+        $columns['method_title'] = array(
+            'title' => __('Method title', 'woo-micuentaweb-payment'),
+            'width' => '210px'
+        );
+
+        $columns['type'] = array(
+            'title' => __('Type', 'woo-micuentaweb-payment'),
+            'width' => '130px'
+        );
+
+        $columns['speed'] = array(
+            'title' => __('Rapidity', 'woo-micuentaweb-payment'),
+            'width' => '75px',
+        );
+
+        $columns['delay'] = array(
+            'title' => __('Delay', 'woo-micuentaweb-payment'),
+            'width' => '90px',
+        );
+
+        $this->form_fields['shipping_options'] = array(
+            'title' => __('Shipping options', 'woo-micuentaweb-payment'),
+            'type' => 'shipping_table',
+            'columns' => $columns,
+            'description' => $descr
+        );
+
+        if (MicuentawebTools::get_white_label_feature('qualif')) {
+            // Tests will be made on qualif, no test mode available.
+            unset($this->form_fields['key_test']);
+
+            $this->form_fields['ctx_mode']['disabled'] = true;
+        }
+
+        if (MicuentawebTools::get_white_label_feature('shatwo')) {
+            // HMAC-SHA-256 already available, update field description.
+            $desc = preg_replace('#<br /><b>[^<>]+</b>#', '', $this->form_fields['sign_algo']['description']);
+            $this->form_fields['sign_algo']['description'] = $desc;
+        }
+
+        if (! $docs) {
+            unset($this->form_fields['doc_link']);
+        }
+
+        // Save general form fields.
+        foreach ($this->form_fields as $k => $v) {
+            $this->general_form_fields[$k] = $v;
+        }
+    }
+
+    protected function init_general_settings()
+    {
+        $this->general_settings = get_option('woocommerce_micuentaweb_settings', null);
+
+        // If there are no settings defined, use defaults.
+        if (! is_array($this->general_settings) || empty($this->general_settings)) {
+            $this->general_settings = array();
+
+            foreach ($this->general_form_fields as $k => $v) {
+                $this->general_settings[$k] = isset($v['default']) ? $v['default'] : '';
+            }
+        }
+    }
+
+    public function get_general_option($key, $empty_value = null)
+    {
+        if (empty($this->general_settings)) {
+            $this->init_general_settings();
+        }
+
+        // Get empty string if unset.
+        if (! isset($this->general_settings[$key])) {
+            $this->general_settings[$key] = '';
+        }
+
+        if (! is_null($empty_value) && ($this->general_settings[$key] === '')) {
+            $this->general_settings[$key] = $empty_value;
+        }
+
+        return $this->general_settings[$key];
+    }
+
+    public function generate_label_html($key, $data)
+    {
+        $defaults = array(
+            'title' => '',
+            'class' => '',
+            'css' => '',
+            'placeholder' => '',
+            'type' => 'label',
+            'description' => ''
+        );
+
+        $data = wp_parse_args($data, $defaults);
+
+        ob_start();
+        if ($data != null) {
+        ?>
+            <tr valign="top">
+                <td class="forminp" colspan="2" style="padding-left: 0;">
+                    <fieldset>
+                        <label class="<?php echo esc_attr($data['class']); ?>" style="<?php echo esc_attr($data['css']); ?>"><?php echo wp_kses_post($data['title']); ?></label>
+                        <p class="description"><?php echo wp_kses_post($data['description']); ?></p>
+                    </fieldset>
+                </td>
+            </tr>
+        <?php
+        }
+
+        return ob_get_clean();
+    }
+
+    public function generate_multilangtext_html($key, $data)
+    {
+        global $wp_version;
+
+        $data['title'] = isset($data['title']) ? $data['title'] : '';
+        $data['disabled'] = empty($data['disabled']) ? false : true;
+        $data['class'] = isset($data['class']) ? ' ' . $data['class'] : '';
+        $data['css'] = isset($data['css']) ? $data['css'] : '';
+        $data['placeholder'] = isset($data['placeholder']) ? $data['placeholder'] : '';
+        $data['type'] = isset($data['type']) ? $data['type'] : 'array';
+        $data['desc_tip'] = isset($data['desc_tip']) ? $data['desc_tip'] : false;
+        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data['default'] = isset($data['default']) ? $data['default'] : array('en_US' => '');
+
+        $languages = get_available_languages();
+        foreach ($languages as $lang) {
+            if (! isset($data['default'][$lang])) {
+                $data['default'][$lang] = $data['default']['en_US'];
+            }
+        }
+
+        $field = $this->plugin_id . $this->id . '_' . $key;
+        $value = (array) stripslashes_deep($this->get_option($key));
+
+        // Set input default value.
+        $default_input_value = isset($value[get_locale()]) ? $value[get_locale()] : $data['default'][get_locale()];
+        $default_input_value = esc_attr($default_input_value);
+
+        ob_start();
+        ?>
+
+        <tr valign="top">
+            <th scope="row" class="titledesc">
+                <label for="<?php echo esc_attr($field); ?>_text"><?php echo wp_kses_post($data['title']); ?></label>
+            </th>
+            <td class="forminp">
+                <fieldset>
+                    <legend class="screen-reader-text"><span><?php echo wp_kses_post($data['title']); ?></span></legend>
+                    <input class="input-text regular-input<?php echo esc_attr($data['class']); ?>" type="text"
+                            name="<?php echo esc_attr($field) . '[text]'; ?>" id="<?php echo esc_attr($field) . '_text'; ?>" style="<?php echo esc_attr($data['css']); ?>"
+                            value="<?php echo $default_input_value; ?>" placeholder="<?php echo esc_attr($data['placeholder']); ?>" <?php disabled($data['disabled'], true); ?>>
+
+                    <?php
+                    if (version_compare($wp_version, '4.0.0', '>=')) {
+                        $select = wp_dropdown_languages(array(
+                            'name' => esc_attr($field) . '[lang]',
+                            'id' => esc_attr($field) . '_lang',
+                            'selected' => get_locale(), // Default selected is current admin locale.
+                            'languages' => $languages,
+                            'translations' => array(),
+                            'show_available_translations' => false,
+                            'echo' => false
+                        ));
+
+                        echo str_replace('<select', '<select style="width: auto; height: auto; vertical-align: top;"', $select);
+                    } else {
+                        $languages = array();
+                    }
+
+                    $languages[] = 'en_US';
+                    foreach ($languages as $lang) {
+                        $v = isset($value[$lang]) ? $value[$lang] : $data['default'][$lang]; ?>
+                        <input type="hidden" id="<?php echo esc_attr($field) . '_' . $lang; ?>"
+                                name="<?php echo esc_attr($field) . '[' . $lang . ']'; ?>"
+                                value="<?php echo esc_attr($v); ?>">
+                    <?php
+                    }
+                    ?>
+
+                    <p class="description"><?php echo wp_kses_post($data['description']); ?></p>
+                </fieldset>
+            </td>
+        </tr>
+
+        <script type="text/javascript">
+            jQuery(document).ready(function() {
+                var key = '#<?php echo esc_attr($field); ?>';
+                jQuery(key + '_lang').bind('change', function() {
+                    var sl = jQuery(key + '_lang').val() || 'en_US';
+                    var value = jQuery(key + '_' + sl).val();
+                    jQuery(key + '_text').val(value);
+                });
+
+                jQuery(key + '_text').bind('change', function() {
+                    var sl = jQuery(key + '_lang').val() || 'en_US';
+                    var value = jQuery(key + '_text').val();
+                    jQuery(key + '_' + sl).val(value);
+                });
+            });
+        </script>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    /**
+     * Generate text input HTML.
+     *
+     * @access public
+     * @param mixed $key
+     * @param mixed $data
+     * @since 1.0.0
+     * @return string
+     */
+    public function generate_table_html($key, $data)
+    {
+        global $woocommerce;
+
+        $html = '';
+
+        $data['title'] = isset($data['title']) ? $data['title'] : '';
+        $data['disabled'] = empty($data['disabled']) ? false : true;
+        $data['class'] = isset($data['class']) ? $data['class'] : '';
+        $data['css'] = isset($data['css']) ? $data['css'] : '';
+        $data['placeholder'] = isset($data['placeholder']) ? $data['placeholder'] : '';
+        $data['type'] = isset($data['type']) ? $data['type'] : 'text';
+        $data['desc_tip'] = isset($data['desc_tip']) ? $data['desc_tip'] : false;
+        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data['columns'] = isset($data['columns']) ? (array) $data['columns'] : array();
+
+        // Description handling.
+        if ($data['desc_tip'] === true) {
+            $description = '';
+            $tip = $data['description'];
+        } elseif (! empty($data['desc_tip'])) {
+            $description = $data['description'];
+            $tip = $data['desc_tip'];
+        } elseif (! empty($data['description'])) {
+            $description = $data['description'];
+            $tip = '';
+        } else {
+            $description = $tip = '';
+        }
+
+        $options = $this->get_option($key);
+        if ($key === 'extra_payment_means' && ! empty($options)) {
+            foreach ($options as $key_card => $option_card) {
+                $cards = MicuentawebApi::getSupportedCardTypes(MicuentawebTools::get_white_label());
+                if (isset($cards[$option_card['code']])) {
+                    unset($options[$key_card]);
+                }
+            }
+        }
+
+        $field_name = esc_attr($this->plugin_id . $this->id . '_' . $key);
+
+        $html .= '<tr valign="top">' . "\n";
+        $html .= '<th scope="row" class="titledesc">';
+        $html .= '<label for="' . esc_attr($this->plugin_id . $this->id . '_' . $key) . '">' . wp_kses_post($data['title']) . '</label>';
+
+        if ($tip) {
+            $html .= '<img class="help_tip" data-tip="' . esc_attr($tip) . '" src="' . $woocommerce->plugin_url() . '/assets/images/help.png" height="16" width="16" />';
+        }
+
+        $html .= '</th>' . "\n";
+        $html .= '<td class="forminp">' . "\n";
+        $html .= '<fieldset><legend class="screen-reader-text"><span>' . wp_kses_post($data['title']) . '</span></legend>' . "\n";
+
+        $html .= '<input id="' . $field_name . '_btn" class="' . $field_name . '_btn ' . esc_attr($data['class']) . '"' . (! empty($options) ? ' style="display: none;"' : '') . ' type="button" value="' . __('Add', 'woo-micuentaweb-payment') . '">';
+        $html .= '<table id="' . $field_name . '_table" class="' . esc_attr($data['class']) . '"' . (empty($options) ? ' style="display: none;"' : '') . ' cellpadding="10" cellspacing="0" >';
+
+        $html .= '<thead><tr>';
+        $record = array();
+        foreach ($data['columns'] as $code => $column) {
+            $record[$code] = '';
+            $html .= '<th class="' . $code . '" style="width: ' . $column['width'] . '; padding: 0px;">' . $column['title'] . '</th>';
+        }
+
+        $html .= '<th style="width: auto; padding: 0px;"></th>';
+        $html .= '</tr></thead>';
+
+        $html .= '<tbody>';
+        $html .= '<tr id="' . $field_name . '_add">
+                    <td colspan="' . count($data['columns']) . '"></td>
+                    <td style="padding: 0px;"><input class="' . $field_name . '_btn" type="button" value="' . __('Add') . '"></td>
+                  </tr>';
+        $html .= '</tbody></table>';
+
+        $html .= "\n" . '<script type="text/javascript">';
+        $html .= "\n" . 'jQuery(".' . $field_name . '_btn").click(function() {
+                            micuentawebAddOption("' . $field_name . '", ' . json_encode($record) . ');
+                         })';
+
+        if (! empty($options)) {
+            // Add already inserted lines.
+            foreach ($options as $code => $option) {
+                $html .= "\n" . 'micuentawebAddOption("' . $field_name . '", ' . json_encode($option) . ', "' . $code . '");';
+            }
+        }
+
+        $html .= "\n" . '</script>';
+
+        if ($description) {
+            $html .= ' <p class="description">' . wp_kses_post($description) . '</p>' . "\n";
+        }
+
+        $html .= '</fieldset>';
+        $html .= '</td>' . "\n";
+        $html .= '</tr>' . "\n";
+
+        return $html;
+    }
+
+    /**
+     * Generate text input HTML.
+     *
+     * @access public
+     * @param mixed $key
+     * @param mixed $data
+     * @since 1.0.0
+     * @return string
+     */
+    public function generate_shipping_table_html($key, $data)
+    {
+        global $woocommerce;
+
+        $html = '';
+
+        $data['title'] = isset($data['title']) ? $data['title'] : '';
+        $data['disabled'] = empty($data['disabled']) ? false : true;
+        $data['class'] = isset($data['class']) ? $data['class'] : '';
+        $data['css'] = isset($data['css']) ? $data['css'] : '';
+        $data['placeholder'] = isset($data['placeholder']) ? $data['placeholder'] : '';
+        $data['type'] = isset($data['type']) ? $data['type'] : 'text';
+        $data['desc_tip'] = isset($data['desc_tip']) ? $data['desc_tip'] : false;
+        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data['columns'] = isset($data['columns']) ? (array) $data['columns'] : array();
+        $data['default'] = isset($data['default']) ? (array) $data['default'] : array();
+
+        // Description handling.
+        if ($data['desc_tip'] === true) {
+            $description = '';
+            $tip = $data['description'];
+        } elseif (! empty($data['desc_tip'])) {
+            $description = $data['description'];
+            $tip = $data['desc_tip'];
+        } elseif (! empty($data['description'])) {
+            $description = $data['description'];
+            $tip = '';
+        } else {
+            $description = $tip = '';
+        }
+
+        $field_name = esc_attr($this->plugin_id . $this->id . '_' . $key);
+
+        $html .= '<tr valign="top">' . "\n";
+        $html .= '<th scope="row" class="titledesc">';
+        $html .= '<label for="' . esc_attr($this->plugin_id . $this->id . '_' . $key) . '">' . wp_kses_post($data['title']) . '</label>';
+
+        if ($tip) {
+            $html .= '<img class="help_tip" data-tip="' . esc_attr($tip) . '" src="' . $woocommerce->plugin_url() . '/assets/images/help.png" height="16" width="16" />';
+        }
+
+        $html .= '</th>' . "\n";
+        $html .= '<td class="forminp">' . "\n";
+        $html .= '<fieldset><legend class="screen-reader-text"><span>' . wp_kses_post($data['title']) . '</span></legend>' . "\n";
+
+        $html .= '<table id="' . $field_name . '_table" class="' . esc_attr($data['class']) . '" cellpadding="10" cellspacing="0" >';
+
+        $html .= '<thead><tr>';
+        foreach ($data['columns'] as $code => $column) {
+            $html .= '<th class="' . $code . '" style="width: ' . $column['width'] . '; padding: 0px;">' . $column['title'] . '</th>';
+        }
+
+        $html .= '<th style="width: auto; padding: 0px;"></th>';
+        $html .= '</tr></thead>';
+
+        $html .= '<tbody>';
+
+        $shipping_methods = WC()->shipping->get_shipping_methods();
+        $options = $this->get_option($key);
+
+        if (! is_array($options) || empty($options)) {
+            $options = array();
+        }
+
+        $shipping_types = array(
+            'PACKAGE_DELIVERY_COMPANY' => __('Delivery company', 'woo-micuentaweb-payment'),
+            'RECLAIM_IN_SHOP' => __('Reclaim in shop', 'woo-micuentaweb-payment'),
+            'RELAY_POINT' => __('Relay point', 'woo-micuentaweb-payment'),
+            'RECLAIM_IN_STATION' => __('Reclaim in station', 'woo-micuentaweb-payment')
+        );
+
+        $shipping_rapidities = array(
+            'STANDARD' => __('Standard', 'woo-micuentaweb-payment'),
+            'EXPRESS' => __('Express', 'woo-micuentaweb-payment'),
+            'PRIORITY' => __('Priority', 'woo-micuentaweb-payment')
+        );
+
+        $shipping_delays = array(
+            'INFERIOR_EQUALS' => __('<= 1 hour', 'woo-micuentaweb-payment'),
+            'SUPERIOR' => __('> 1 hour', 'woo-micuentaweb-payment'),
+            'IMMEDIATE' => __('Immediate', 'woo-micuentaweb-payment'),
+            'ALWAYS' =>  __('24/7', 'woo-micuentaweb-payment'),
+        );
+
+        foreach ($shipping_methods as $method) {
+            $code = $method->id;
+
+            if (! isset($options[$code]) || ! is_array($options[$code])) {
+                $options[$code]['new'] = true;
+                $options[$code]['type'] = 'PACKAGE_DELIVERY_COMPANY';
+                $options[$code]['speed'] = 'STANDARD';
+            } else {
+                $options[$code]['new'] = false;
+            }
+
+            $options[$code]['method_title'] = $method->method_title;
+        }
+
+        foreach ($options as $code => $option) {
+            $html .= '<tr>';
+            $html .= '<td style="padding: 5px;"><label style="display: inline;">';
+            $html .= $option['method_title'] . ($option['new'] == true ? '<span style="color: red;">*</span> ' : '');
+            $html .= '</label></td>';
+
+            $html .= '<td style="padding: 5px;"><select name="' . $field_name . '[' . $code . '][type]"
+                      value="' . (isset($option['type']) ? $option['type'] : '') . '">';
+            foreach ($shipping_types as $key => $value) {
+                $selected = ($key === $option['type']) ? 'selected="selected"' : '';
+                $html .= '<option value="' . $key . '" ' . $selected . '>' . $value . '</option>';
+            }
+
+            $html .= '<td style="padding: 5px;"><select class="micuentaweb_list_speed" id="' . $field_name . '_' . $code . '_speed"
+                      name="' . $field_name . '[' . $code . '][speed]"
+                      value="' . (isset($option['speed']) ? $option['speed'] : '') . '"
+                      onchange="javascript:micuentawebUpdateShippingOptionsDisplay(\'' . $field_name . '_' . $code . '_speed\')">';
+            foreach ($shipping_rapidities as $key => $value) {
+                $selected = (isset($option['speed']) && ($key === $option['speed'])) ? 'selected="selected"' : '';
+                $html .= '<option value="' . $key . '" ' . $selected . '>' . $value . '</option>';
+            }
+
+            $html .= '<td style="padding: 5px;"><select id="' . $field_name . '_' . $code . '_delay"
+                      name="' . $field_name . '[' . $code . '][delay]"
+                      value="' . (isset($option['delay']) ? $option['delay'] : '') . '">';
+            foreach ($shipping_delays as $key => $value) {
+                $selected = (isset($option['delay']) && $key === $option['delay']) ? 'selected="selected"' : '';
+                $html .= '<option value="' . $key . '" ' . $selected . '>' . $value . '</option>';
+            }
+
+            $html .= '</select></td>';
+
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table>';
+
+        if ($description) {
+            $html .= ' <p class="description">' . wp_kses_post($description) . '</p>' . "\n";
+        }
+
+        $html .= '</fieldset>';
+        $html .= '</td>' . "\n";
+        $html .= '</tr>' . "\n";
+
+        return $html;
+    }
+
+    public function validate_shipping_options_field($key, $value = null)
+    {
+        $name = $this->plugin_id . $this->id . '_' . $key;
+        $value = $value ? $value : (key_exists($name, $_POST) ? $_POST[$name] : array());
+
+        foreach ($value as $code => $option) {
+            // Clean string.
+            $fnc = function_exists('wc_clean') ? 'wc_clean' : 'woocommerce_clean';
+            $value[$code] = array_map('esc_attr', array_map($fnc, (array) $option));
+        }
+
+        return $value;
+    }
+
+    public function validate_multilangtext_field($key, $value = null)
+    {
+        $name = $this->plugin_id . $this->id . '_' . $key;
+        $old_value = $this->get_option($key);
+        $new_value = ! is_null($value) ? $value : (key_exists($name, $_POST) ? $_POST[$name] : '');
+
+        if (isset($new_value) && is_array($new_value) && ! empty($new_value)) {
+            unset($new_value['text']);
+            unset($new_value['lang']);
+
+            $languages = get_available_languages();
+            $languages[] = 'en_US'; // En_US locale is always available for WP.
+            foreach ($languages as $lang) {
+                if (! isset($new_value[$lang]) || ! $new_value[$lang]) {
+                    $new_value[$lang] = $old_value[$lang];
+                }
+            }
+
+            return $new_value;
+        }
+
+        return $old_value;
+    }
+
+    /**
+     * Validate multiselect field.
+     *
+     * @return array
+     */
+    public function validate_multiselect_field($key, $value = null)
+    {
+        $name = $this->plugin_id . $this->id . '_' . $key;
+        $new_value = ! is_null($value) ? $value : (key_exists($name, $_POST) ? $_POST[$name] : array(''));
+
+        if (isset($new_value) && is_array($new_value) && in_array('', $new_value)) {
+            return array('');
+        }
+
+        return parent::validate_multiselect_field($key, $value);
+    }
+
+    public function validate_ctx_mode_field($key, $value = null)
+    {
+        $name = $this->plugin_id . $this->id . '_' . $key;
+        $new_value = ! is_null($value) ? $value : (key_exists($name, $_POST) ? $_POST[$name] : null);
+
+        if (! $new_value && MicuentawebTools::get_white_label_feature('qualif'))  {
+            // When using qualif for testing, mode is always PRODUCTION.
+            return 'PRODUCTION';
+        }
+
+        return parent::validate_select_field($key, $value);
+    }
+
+    public function validate_3ds_min_amount_field($key, $value = null)
+    {
+        if (empty($value)) {
+            return '';
+        }
+
+        $new_value = parent::validate_text_field($key, $value);
+
+        $new_value = str_replace(',', '.', $new_value);
+        if (! is_numeric($new_value) || ($new_value < 0)) { // Invalid value, restore old.
+            return $this->get_option($key);
+        }
+
+        return $new_value;
+    }
+
+    public function generate_category_mapping_html($key, $data)
+    {
+        global $woocommerce;
+
+        $html = '';
+
+        $data['title'] = isset($data['title']) ? $data['title'] : '';
+        $data['disabled'] = empty($data['disabled']) ? false : true;
+        $data['class'] = isset($data['class']) ? $data['class'] : '';
+        $data['css'] = isset($data['css']) ? $data['css'] : '';
+        $data['placeholder'] = isset($data['placeholder']) ? $data['placeholder'] : '';
+        $data['type'] = isset($data['type']) ? $data['type'] : 'text';
+        $data['desc_tip'] = isset($data['desc_tip']) ? $data['desc_tip'] : false;
+        $data['description'] = isset($data['description']) ? $data['description'] : '';
+        $data['columns'] = isset($data['columns']) ? (array) $data['columns'] : array();
+        $data['default'] = isset($data['default']) ? (array) $data['default'] : array();
+
+        // Description handling.
+        if ($data['desc_tip'] === true) {
+            $description = '';
+            $tip = $data['description'];
+        } elseif (! empty($data['desc_tip'])) {
+            $description = $data['description'];
+            $tip = $data['desc_tip'];
+        } elseif (! empty($data['description'])) {
+            $description = $data['description'];
+            $tip = '';
+        } else {
+            $description = $tip = '';
+        }
+
+        $field_name = esc_attr($this->plugin_id . $this->id . '_' . $key);
+
+        $html .= '<tr valign="top">' . "\n";
+        $html .= '<th scope="row" class="titledesc">';
+        $html .= '<label for="' . esc_attr($this->plugin_id . $this->id . '_' . $key) . '">' . wp_kses_post($data['title']) . '</label>';
+
+        if ($tip) {
+            $html .= '<img class="help_tip" data-tip="' . esc_attr($tip) . '" src="' . $woocommerce->plugin_url() . '/assets/images/help.png" height="16" width="16" />';
+        }
+
+        $html .= '</th>' . "\n";
+        $html .= '<td class="forminp">' . "\n";
+        $html .= '<fieldset><legend class="screen-reader-text"><span>' . wp_kses_post($data['title']) . '</span></legend>' . "\n";
+
+        $html .= '<table id="' . $field_name . '_table" class="' . esc_attr($data['class']) . '" cellpadding="10" cellspacing="0" >';
+
+        $html .= '<thead><tr>';
+        foreach ($data['columns'] as $code => $column) {
+            $html .= '<th class="' . $code . '" style="width: ' . $column['width'] . '; padding: 0px;">' . $column['title'] . '</th>';
+        }
+
+        $html .= '<th style="width: auto; padding: 0px;"></th>';
+        $html .= '</tr></thead>';
+
+        $html .= '<tbody>';
+
+        $cat_args = array(
+            'orderby'    => 'id',
+            'order'      => 'asc',
+            'hide_empty' => false,
+        );
+
+        $categories = get_terms('product_cat', $cat_args);
+        $options = $this->get_option($key);
+
+        if (! is_array($options) || empty($options)) {
+            $options = array();
+        }
+
+        foreach ($categories as $category) {
+            if ($category->parent == 0) {
+                $code = $category->term_id;
+
+                if (! isset($options[$code]) || ! is_array($options[$code])) {
+                    $options[$code]['category'] = 'FOOD_AND_GROCERY';
+                    $options[$code]['new'] = true;
+                } else {
+                    $options[$code]['new'] = false;
+                }
+
+                $options[$code]['label'] = $category->name;
+            }
+        }
+
+        foreach ($options as $code => $option) {
+            $html .= '<tr>';
+            $html .= '<td style="padding: 5px;"><label style="display: inline;">';
+            $html .= $option['label'] . ($option['new'] == true ? '<span style="color: red;">*</span> ' : '');
+            $html .= '</label></td>';
+
+            $html .= '<td style="padding: 5px;"><select name="' . $field_name . '[' . $code . '][category]"
+                      value="' . (isset($option['category']) ? $option['category'] : '') . '">';
+            foreach ($this->get_gateway_categories() as $key => $value) {
+                $selected = ($key === $option['category']) ? 'selected="selected"' : '';
+                $html .= '<option value="' . $key . '" ' . $selected . '>' . $value . '</option>';
+            }
+
+            $html .= '</select></td>';
+
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table>';
+
+        if ($description) {
+            $html .= ' <p class="description">' . wp_kses_post($description) . '</p>' . "\n";
+        }
+
+        $html .= '</fieldset>';
+        $html .= '</td>' . "\n";
+        $html .= '</tr>' . "\n";
+
+        return $html;
+    }
+
+    public function validate_category_mapping_field($key, $value = null)
+    {
+        $name = $this->plugin_id . $this->id . '_' . $key;
+        $value = $value ? $value : (key_exists($name, $_POST) ? $_POST[$name] : array());
+
+        foreach ($value as $code => $option) {
+            // Clean string.
+            $fnc = function_exists('wc_clean') ? 'wc_clean' : 'woocommerce_clean';
+            $value[$code] = array_map('esc_attr', array_map($fnc, (array) $option));
+        }
+
+        return $value;
+    }
+
+    /**
+     * Check if this gateway is available for the current currency.
+     */
+    protected function is_supported_currency()
+    {
+        $currency = MicuentawebApi::findCurrencyByAlphaCode(get_woocommerce_currency(), MicuentawebTools::get_white_label());
+        if ($currency == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check for notify response.
+     **/
+    public function micuentaweb_notify_response()
+    {
+        global $woocommerce;
+
+        @ob_clean();
+
+        $raw_response = (array) stripslashes_deep($_REQUEST);
+
+        $micuentaweb_response = new MicuentawebResponse(
+            $raw_response,
+            $this->get_general_option('ctx_mode'),
+            $this->get_general_option('key_test'),
+            $this->get_general_option('key_prod'),
+            $this->get_general_option('sign_algo')
+        );
+
+        // Save WC Notices to restore them on return page.
+        if ($session_id = $micuentaweb_response->getExtInfo('session_id')) {
+            MicuentawebTools::set_transient('micuentaweb_session_id', $session_id);
+        }
+
+        $from_server = $micuentaweb_response->get('hash') != null;
+
+        if (! $micuentaweb_response->isAuthentified()) {
+            $this->log('Authentication failed: received invalid response with parameters: ' . print_r($raw_response, true));
+            $this->log('Signature algorithm selected in module settings must be the same as one selected in gateway Back Office.');
+
+            if ($from_server) {
+                $this->log('IPN URL PROCESS END');
+
+                die($micuentaweb_response->getOutputForGateway('auth_fail'));
+            } else {
+                // Fatal error, empty cart.
+                $woocommerce->cart->empty_cart();
+                $this->add_notice(__('An error has occurred in the payment process.', 'woo-micuentaweb-payment'), 'error');
+
+                $this->log('RETURN URL PROCESS END');
+
+                $cart_url = function_exists('wc_get_cart_url') ? wc_get_cart_url() : $woocommerce->cart->get_cart_url();
+                $this->micuentaweb_redirect($cart_url);
+            }
+        } else {
+            header('HTTP/1.1 200 OK');
+
+            $this->micuentaweb_manage_notify_response($micuentaweb_response);
+        }
+    }
+
+    /**
+     * Valid payment process : update order, send mail, ...
+     **/
+    public function micuentaweb_manage_notify_response($micuentaweb_response, $from_server_rest = false, $update_on_failure = true, $server_rest_abandoned_payment = false)
+    {
+        global $woocommerce;
+
+        // Clear all response messages.
+        $this->clear_notices();
+
+        // Save WC Notices to restore them on return page.
+        if ($session_id = $micuentaweb_response->getExtInfo('session_id')) {
+            MicuentawebTools::set_transient('micuentaweb_session_id', $session_id);
+        }
+
+        $order_id = $micuentaweb_response->get('order_id');
+        $from_server = $micuentaweb_response->get('hash') != null || $from_server_rest;
+
+        // Cart URL.
+        $cart_url = function_exists('wc_get_cart_url') ? wc_get_cart_url() : $woocommerce->cart->get_cart_url();
+
+        // Checkout payment URL to allow re-order.
+        $checkout_url = function_exists('wc_get_checkout_url') ? wc_get_checkout_url() : $woocommerce->cart->get_checkout_url();
+
+        // Get ext_info parameter.
+        $key = $micuentaweb_response->getExtInfo('order_key');
+
+        $order = wc_get_order($order_id);
+
+        // Clear cached embedded form config, whether triggered by IPN or by the customer returning to the shop.
+        if ($update_on_failure && $order && $order->get_meta('_micuentaweb_form_token', true)) {
+            $order->delete_meta_data('_micuentaweb_form_token');
+            $order->delete_meta_data('_micuentaweb_form_token_created_at');
+            $order->save();
+        }
+
+        if ($server_rest_abandoned_payment && MicuentawebTools::is_embedded_payment() && empty($micuentaweb_response->getTransStatus())) {
+            if (! $order && ($this->get_option('rest_popin') !== 'yes')) {
+                $this->log("Payment abandoned, do nothing.");
+                $this->log("IPN URL process end for order #$order_id");
+
+                die('<span style="display:none">KO-Payment abandoned, no order to update. IPN ignored.' . "\n" . '</span>');
+            }
+
+            if ($order && ($this->get_option('rest_popin') == 'yes')) {
+                $this->log("Payment abandoned in popin mode. Cancel order #$order_id.");
+
+                $order_can_be_cancelled = $order->has_status(apply_filters('woocommerce_valid_order_statuses_for_cancel', array('pending', 'failed'), $order));
+                if ($order_can_be_cancelled) {
+                    $order->update_status('cancelled');
+                    $this->log("Order #$order_id cancelled successfully.");
+                }
+
+                $this->log("IPN URL process end for order #$order_id");
+
+                die('<span style="display:none">KO-Payment abandoned, order cancelled.' . "\n" . '</span>');
+            }
+        }
+
+        if (! $order && ($this->get_general_option('delete_order_on_failure') == "yes")
+            && ! self::is_successful_action($micuentaweb_response)) {
+            $this->log("Order #$order_id was deleted on payment failure. Please, try to re-order.");
+
+            if ($from_server) {
+                $this->log("IPN URL process end for order #$order_id");
+                die($micuentaweb_response->getOutputForGateway('payment_ko'));
+            } else {
+                $this->log("Return URL process end for order #$order_id");
+
+                if (! $micuentaweb_response->isCancelledPayment()) {
+                    $this->add_notice(__('Your payment was not accepted. Please, try to re-order.', 'woo-micuentaweb-payment'), 'error');
+                    $this->micuentaweb_redirect($cart_url);
+                } else {
+                    $this->micuentaweb_redirect($checkout_url);
+                }
+            }
+        }
+
+        // If gateway doesn't return vads_ext_info_order_key, skip ckecking order key.
+        if (! $order || ! self::get_order_property($order, 'id') || ($key && (self::get_order_property($order, 'order_key') !== $key))) {
+            if ($micuentaweb_response->getExtInfo('from_account')) {
+                if ($micuentaweb_response->get('identifier') || ($micuentaweb_response->get('identifier_status') == 'CREATED')) {
+                    wc_add_notice(__('Payment method successfully added.', 'woocommerce'));
+                } else {
+                    wc_add_notice(__('Unable to add payment method to your account.', 'woocommerce'), 'error');
+                }
+
+                $cust_id = self::get_customer_property($woocommerce->customer, 'id');
+                delete_transient('micuentaweb_account_token_data_' . $cust_id);
+                delete_transient('micuentaweb_account_token_' . $cust_id);
+
+                $this->micuentaweb_redirect(wc_get_account_endpoint_url('payment-methods'));
+            }
+
+            $this->log("Error: order #$order_id not found or key does not match received invoice ID.");
+
+            if ($from_server) {
+                $this->log("IPN URL process end for order #$order_id");
+
+                die($micuentaweb_response->getOutputForGateway('order_not_found'));
+            } else {
+                // Fatal error, empty cart.
+                $woocommerce->cart->empty_cart();
+                $this->add_notice(__('An error has occurred in the payment process.', 'woo-micuentaweb-payment'), 'error');
+
+                $this->log("Return URL process end for order #$order_id");
+                $this->micuentaweb_redirect($cart_url);
+            }
+        }
+
+        if (! $from_server && $this->testmode && MicuentawebTools::get_white_label_feature('prodfaq')) {
+            $msg = __('<p><u>GOING INTO PRODUCTION</u></p>You want to know how to put your shop into production mode, please read chapters « Proceeding to test phase » and « Shifting the shop to production mode » in the documentation of the module.', 'woo-micuentaweb-payment');
+
+            $this->add_notice($msg);
+        }
+
+        // Backward compatibility.
+        if (version_compare($woocommerce->version, '2.1.0', '<')) {
+            $checkout_url = $cart_url = $order->get_cancel_order_url();
+        }
+
+        $this->set_payment_method($order);
+
+        // Use the selected susbscriptions handler.
+        $method = self::get_order_property($order, 'payment_method');
+        $subscriptions_handler = self::subscriptions_handler($method);
+
+        // Order not processed yet or a failed payment (re-order).
+        if ($this->is_new_order($order, $micuentaweb_response->get('trans_id'), $micuentaweb_response->get('sequence_number'))) {
+            // Clear transients.
+            delete_transient('micuentaweb_token_data_' . $micuentaweb_response->getExtInfo('session_id'));
+            delete_transient('micuentaweb_token_data_identifier_' . $micuentaweb_response->getExtInfo('session_id'));
+            delete_transient('micuentaweb_token_' . $micuentaweb_response->getExtInfo('session_id'));
+            delete_transient('micuentaweb_token_identifier_' . $micuentaweb_response->getExtInfo('session_id'));
+            delete_transient('micuentawebfranfinance_option_' . $order_id);
+            delete_transient('micuentawebmulti_option_' . $order_id);
+            delete_transient('micuentawebregroupedother_card_type_' . $order_id);
+
+            // Add order note.
+            self::micuentaweb_add_order_note($micuentaweb_response, $order);
+
+            self::micuentaweb_update_order_meta($micuentaweb_response, $order);
+
+            if (self::is_successful_action($micuentaweb_response)) {
+                if ($micuentaweb_response->isPendingPayment()) {
+                    // Payment is pending.
+                    $this->log("Payment is pending, make order #$order_id in on-hold status.");
+
+                    $order->update_status('on-hold');
+                } elseif ($micuentaweb_response->isAcceptedPayment()) {
+                    // Payment completed.
+                    $this->log("Payment successfull, let's complete order #$order_id.");
+
+                    $order->payment_complete();
+                }
+
+                // Try to save identifier if any.
+                $this->micuentaweb_save_identifier($order, $micuentaweb_response);
+
+                if ($subscriptions_handler) {
+                    // Try to save subscritption info if any.
+                    $this->micuentaweb_save_recurrence($order, $micuentaweb_response);
+
+                    $subscriptions_handler->process_subscription($order, $micuentaweb_response);
+                }
+
+                if ($from_server) {
+                    $this->log("Payment processed successfully by IPN URL call for order #$order_id.");
+                    $this->log("IPN URL process end for order #$order_id");
+
+                    die($micuentaweb_response->getOutputForGateway('payment_ok'));
+                } else {
+                    $this->log("Warning! IPN URL call has not worked. Payment completed by return URL call for order #$order_id.");
+
+                    if ($this->testmode) {
+                        $ipn_url_warn = sprintf(__('The automatic validation has not worked. Have you correctly set up the notification URL in the %s Back Office?', 'woo-micuentaweb-payment'), self::BACKOFFICE_NAME);
+                        $ipn_url_warn .= '<br />';
+                        $ipn_url_warn .= __('For understanding the problem, please read the documentation of the module : <br />&nbsp;&nbsp;&nbsp;- Chapter &laquo; To read carefully before going further &raquo;<br />&nbsp;&nbsp;&nbsp;- Chapter &laquo; Notification URL settings &raquo;', 'woo-micuentaweb-payment');
+
+                        $this->add_notice($ipn_url_warn, 'error');
+                    }
+
+                    $this->log("Return URL process end for order #$order_id");
+                    $this->micuentaweb_redirect($this->get_return_url($order));
+                }
+            } else {
+                $this->log("Payment failed or cancelled for order #$order_id. {$micuentaweb_response->getLogMessage()}");
+                if ($from_server) {
+                    if ($update_on_failure || $this->get_general_option('delete_order_on_failure') !== 'yes') {
+                        $order->update_status('failed');
+                        $this->log("Order #$order_id status updated successfully on failure.");
+
+                        $msg = 'payment_ko';
+                    } else {
+                        $msg = 'payment_ko_bis';
+                    }
+                } else {
+                    $order->update_status('failed');
+                    $this->log("Order #$order_id status updated successfully on failure.");
+                }
+
+                if ($subscriptions_handler) {
+                    // Try to manage subscription if any.
+                    $subscriptions_handler->process_subscription($order, $micuentaweb_response);
+                }
+
+                if ($from_server) {
+                    $this->log("IPN URL process end for order #$order_id");
+                    die($micuentaweb_response->getOutputForGateway($msg));
+                } else {
+                    $this->log("Return URL process end for order #$order_id");
+
+                    if (! $micuentaweb_response->isCancelledPayment()) {
+                        $this->add_notice(__('Your payment was not accepted. Please, try to re-order.', 'woo-micuentaweb-payment'), 'error');
+                        $this->micuentaweb_redirect($cart_url);
+                    } else {
+                        $this->micuentaweb_redirect($checkout_url);
+                    }
+                }
+            }
+        } else {
+            $this->log("Order #$order_id is already saved.");
+
+            // Manage the case of an alias created for new subscription method.
+            $wcs_scheduled = ($method === 'micuentawebwcssubscription');
+
+            // Case of new recurrence on an active subscription with our method.
+            if ($micuentaweb_response->get('recurrence_number') && $subscriptions_handler) {
+                // IPN URL called for each recurrence creation on gateway.
+                $this->log("New recurrence created for order #$order_id. Let subscriptions handler do the work.");
+
+                $subscriptions_handler->process_subscription_renewal($order, $micuentaweb_response);
+
+                if (self::is_successful_action($micuentaweb_response)) {
+                    $this->log("Payment recurrence processed successfully by IPN URL call for order #$order_id.");
+                    echo($micuentaweb_response->getOutputForGateway('payment_ok'));
+                } else {
+                    echo($micuentaweb_response->getOutputForGateway('payment_ko'));
+                }
+
+                $this->log("IPN URL process end for order #$order_id");
+                die();
+            } elseif (($micuentaweb_response->get('identifier_status') === 'UPDATED')
+                || (($micuentaweb_response->get('identifier_status') === 'CREATED') && $wcs_scheduled)
+                    /* Case of method change from WooCommerce or subscription creation on gateway Back Office. */
+                    || ((($micuentaweb_response->get('recurrence_status') === 'CREATED') || ($micuentaweb_response->get('recurrence_number') === '1'))
+                        && ($subscriptions_handler = self::subscriptions_handler('micuentawebsubscription')))) {
+                // Means of payment updated on payment gateway.
+                $this->log("Updating payment means on gateway for order #$order_id.");
+
+                // View subscription URL (in case of changing payment method of an existing subscription).
+                $subsc_redirect_url = false;
+                if ($subsc_id = $micuentaweb_response->getExtInfo('subsc_id')) {
+                    $subsc_redirect_url = isset($subscriptions_handler) ? $subscriptions_handler->get_view_order_url($subsc_id) : MicuentawebTools::get_view_order_url($subsc_id);
+                }
+
+                if (self::is_successful_action($micuentaweb_response)) {
+                    // Means of payment successfully updated on payment gateway.
+                    $this->log("Means of payment successfully updated for order #$order_id. Save new means of payment info.");
+
+                    // Workarround to manage subscription creation on gateway Back Office.
+                    // Delete workarround when subscription IPN is fixed.
+                    $force_update = $micuentaweb_response->get('recurrence_number') === '1';
+
+                    if ($force_update && ($method !== 'micuentawebsubscription')) {
+                        // Update payment method in order.
+                        $micuentaweb_subscription = new WC_Gateway_MicuentawebSubscription();
+                        if (method_exists($order, 'set_payment_method')) {
+                            $order->set_payment_method($micuentaweb_subscription);
+                        } else {
+                            $order->payment_method = $micuentaweb_subscription->id;
+                            $order->payment_method_title = $micuentaweb_subscription->get_title();
+                        }
+
+                        $order->save();
+                    }
+
+                    // Try to save identifier if any.
+                    $this->micuentaweb_save_identifier($order, $micuentaweb_response, $force_update);
+
+                    // Try to save subscription info if any.
+                    $this->micuentaweb_save_recurrence($order, $micuentaweb_response, $force_update);
+
+                    if ($subscriptions_handler && ! $wcs_scheduled) {
+                        $subscriptions_handler->process_subscription($order, $micuentaweb_response);
+
+                        // Try to save subscription recurrences.
+                        if ($force_update) {
+                            $subscriptions_handler->process_subscription_renewal($order, $micuentaweb_response);
+                        }
+                    }
+
+                    if ($from_server) {
+                        $this->log("IPN URL process end for order #$order_id");
+                        die($micuentaweb_response->getOutputForGateway('payment_ok_already_done'));
+                    } else {
+                        $this->add_notice(__('Payment method updated.', 'woo-micuentaweb-payment'));
+
+                        $this->log("Return URL process end for order #$order_id");
+                        $this->micuentaweb_redirect($subsc_redirect_url ? $subsc_redirect_url : $this->get_return_url($order));
+                    }
+                } else {
+                    if ($from_server) {
+                        $this->log("IPN URL process end for order #$order_id");
+                        die($micuentaweb_response->getOutputForGateway('payment_ok_already_done'));
+                    } else {
+                        $this->log("Return URL process end for order #$order_id");
+
+                        if (! $micuentaweb_response->isCancelledPayment()) {
+                            $this->add_notice(__('The payment method can not be changed for that subscription.', 'woo-micuentaweb-payment'), 'error');
+
+                            $this->micuentaweb_redirect($subsc_redirect_url ? $subsc_redirect_url : $cart_url);
+                        } else {
+                            $this->micuentaweb_redirect($subsc_redirect_url ? $subsc_redirect_url : $checkout_url);
+                        }
+                    }
+                }
+            }
+
+            $order_status = self::get_order_property($order, 'status');
+            if ($from_server && ($order_status === 'on-hold')) {
+                switch (true) {
+                    case $micuentaweb_response->isCancelledPayment():
+                        $this->log("Order #$order_id is in a pending status and payment is cancelled. It may be a payment expiration. Do nothing.");
+                        echo($micuentaweb_response->getOutputForGateway('payment_ko_already_done'));
+                        break;
+                    case $micuentaweb_response->isPendingPayment():
+                        $this->log("Order #$order_id is in a pending status and stays in the same status. Do nothing.");
+                        echo($micuentaweb_response->getOutputForGateway('payment_ok_already_done'));
+                        break;
+                    case self::is_successful_action($micuentaweb_response):
+                        $this->log("Order #$order_id is in a pending status and payment is accepted. Complete order payment.");
+                        if ($micuentaweb_response->isAcceptedPayment()) {
+                            $this->log("Payment accepted, complete payment for order #$order_id.");
+                            $order->payment_complete();
+
+                            echo($micuentaweb_response->getOutputForGateway('payment_ok'));
+                        }
+
+                        break;
+                    default:
+                        $this->log("Order #$order_id is in a pending status and payment failed. Cancel order.");
+
+                        // Add order note.
+                        self::micuentaweb_add_order_note($micuentaweb_response, $order);
+
+                        $order->update_status('failed');
+                        echo($micuentaweb_response->getOutputForGateway('payment_ko'));
+                        break;
+                }
+
+                $this->log("IPN URL process end for order #$order_id");
+
+                die();
+            } elseif (self::is_successful_action($micuentaweb_response) && key_exists($order_status, self::get_success_order_statuses(false, $subscriptions_handler))) {
+                $status = $micuentaweb_response->isPendingPayment() ? 'pending' : 'successful';
+                $this->log("Payment $status confirmed for order #$order_id.");
+
+                // Order success registered and payment success received.
+                if ($from_server) {
+                    $this->log("IPN URL process end for order #$order_id");
+                    die($micuentaweb_response->getOutputForGateway('payment_ok_already_done'));
+                } else {
+                    $this->log("Return URL process end for order #$order_id");
+                    $this->micuentaweb_redirect($this->get_return_url($order));
+                }
+            } elseif (! self::is_successful_action($micuentaweb_response) && ($order_status === 'failed' || $order_status === 'cancelled')) {
+                $this->log("Payment failed confirmed for order #$order_id.");
+
+                // Order failure registered and payment error received.
+                if ($from_server) {
+                    $this->log("IPN URL process end for order #$order_id");
+                    die($micuentaweb_response->getOutputForGateway('payment_ko_already_done'));
+                } else {
+                    $this->log("Return URL process end for order #$order_id");
+
+                    if (! $micuentaweb_response->isCancelledPayment()) {
+                        $this->add_notice(__('Your payment was not accepted. Please, try to re-order.', 'woo-micuentaweb-payment'), 'error');
+                        $this->micuentaweb_redirect($cart_url);
+                    } else {
+                        $this->micuentaweb_redirect($checkout_url);
+                    }
+                }
+            } else {
+                $this->log("Error! Invalid payment result received for already saved order #$order_id. Payment result : {$micuentaweb_response->getTransStatus()}, Order status : {$order_status}.");
+
+                // Registered order status not match payment result.
+                if ($from_server) {
+                    $this->log("IPN URL process end for order #$order_id");
+
+                    die($micuentaweb_response->getOutputForGateway('payment_ko_on_order_ok'));
+                } else {
+                    // Fatal error, empty cart.
+                    $woocommerce->cart->empty_cart();
+                    $this->add_notice(__('An error has occurred in the payment process.', 'woo-micuentaweb-payment'), 'error');
+
+                    $this->log("Return URL process end for order #$order_id");
+
+                    $this->micuentaweb_redirect($cart_url);
+                }
+            }
+        }
+    }
+
+    public function micuentaweb_complete_order_status($status, $order_id = 0, $order = null)
+    {
+        if ($order_id === 0) {
+            return $status;
+        }
+
+        if ($order === null) {
+            $order = wc_get_order($order_id);
+        }
+
+        if ($order && (strpos(self::get_order_property($order, 'payment_method'), 'micuentaweb') === 0)
+            && ($this->get_general_option('order_status_on_success') != 'default')) {
+            return $this->get_general_option('order_status_on_success');
+        }
+
+        return $status;
+    }
+
+    private function is_new_order($order, $trs_id, $seq_nb)
+    {
+        if ($order->has_status(apply_filters('woocommerce_micuentaweb_valid_order_statuses', array('pending', 'checkout-draft'), $order))) {
+            return true;
+        }
+
+        $current_status = self::get_order_property($order, 'status');
+        if (! in_array($current_status, array('failed', 'cancelled'))) {
+            return false;
+        }
+
+        // Payment method change in case of subscription.
+        if (function_exists('wcs_get_subscription')) {
+            $subscription = wcs_get_subscription(self::get_order_property($order, 'id'));
+            if ($subscription && strpos(self::get_order_property($order, 'payment_method'), 'micuentaweb') === false) {
+                return true;
+            }
+        }
+
+        if (MicuentawebTools::is_hpos_enabled()) {
+            return (($order->get_meta('Transaction ID', true) !== $trs_id) || ($order->get_meta('Sequence number', true) !== $seq_nb));
+        } else {
+            return ((get_post_meta((int) self::get_order_property($order, 'id'), 'Transaction ID', true) !== $trs_id)
+                || (get_post_meta((int) self::get_order_property($order, 'id'), 'Sequence number', true) !== $seq_nb));
+        }
+    }
+
+    protected function log($msg)
+    {
+        if (! $this->debug) {
+            return;
+        }
+
+        $this->logger->add('micuentaweb', $msg);
+    }
+
+    protected function clear_notices()
+    {
+        global $woocommerce;
+
+        delete_transient('micuentaweb_notices_' . wp_get_session_token());
+
+        if (function_exists('wc_clear_notices')) {
+            wc_clear_notices();
+        } else {
+            $woocommerce->clear_messages();
+        }
+    }
+
+    protected function add_notice($msg, $type = 'success')
+    {
+        global $woocommerce;
+
+        if (function_exists('wc_add_notice')) {
+            // To avoid errors on placing order.
+            if (MicuentawebTools::has_checkout_block() && ($type == 'error')) {
+                $type = 'notice';
+            }
+
+            wc_add_notice($msg, $type);
+        } else {
+            if ($type == 'error') {
+                $woocommerce->add_error($msg);
+            } else {
+                $woocommerce->add_message($msg);
+            }
+        }
+    }
+
+    public function micuentaweb_add_order_email_payment_result($order, $sent_to_admin, $plain_text = false)
+    {
+        if (strpos(self::get_order_property($order, 'payment_method'), 'micuentaweb') !== 0) {
+            return;
+        }
+
+        if (MicuentawebTools::is_hpos_enabled()) {
+            $trans_id = $order->get_meta('Transaction ID', true);
+        } else {
+            $trans_id = get_post_meta((int) self::get_order_property($order, 'id'), 'Transaction ID', true);
+        }
+
+        if (! $trans_id) {
+            return;
+        }
+
+        $notes = self::get_order_notes(self::get_order_property($order, 'id'));
+        foreach ($notes as $note) {
+            if (strpos($note, $trans_id) !== false) {
+                $micuentaweb_order_note = $note;
+                break;
+            }
+        }
+
+        if (isset($micuentaweb_order_note)) {
+            if ($plain_text) {
+                echo strtoupper(__('Payment', 'woo-micuentaweb-payment')) . "\n\n" . $micuentaweb_order_note . "\n\n";
+            } else {
+                echo '<h2>' . __('Payment', 'woo-micuentaweb-payment') . '</h2><p>' . str_replace("\n", '<br >', $micuentaweb_order_note) . '</p>';
+            }
+        }
+    }
+
+    /**
+     * Get all notes of a specified order.
+     * @return array[string]
+     */
+    public static function get_order_notes($order_id)
+    {
+        $exclude_fnc = class_exists('WC_Comments') ? array('WC_Comments', 'exclude_order_comments') :
+            'woocommerce_exclude_order_comments';
+
+        remove_filter('comments_clauses', $exclude_fnc, 10);
+
+        $comments = get_comments(array(
+            'post_id' => $order_id,
+            'status' => 'approve',
+            'type' => 'order_note'
+        ));
+        $notes = wp_list_pluck($comments, 'comment_content');
+
+        add_filter('comments_clauses', $exclude_fnc, 10, 1);
+
+        return $notes;
+    }
+
+    public static function get_order_property($order, $property_name)
+    {
+        if (! $order || is_bool($order)) {
+            return '';
+        }
+
+        $method = 'get_' . $property_name;
+
+        if (method_exists($order, $method)) {
+            return $order->$method();
+        }
+
+        return isset($order->$property_name) ? $order->$property_name : null;
+    }
+
+    public static function get_customer_property($customer, $property_name)
+    {
+        if (! $customer) {
+            return null;
+        }
+
+        $method = 'get_' . $property_name;
+
+        if (method_exists($customer, $method)) {
+            return $customer->$method();
+        }
+
+        return isset($customer->$property_name) ? $customer->$property_name : null;
+    }
+
+    protected function micuentaweb_redirect($url)
+    {
+        // Save WC Notices to restore them on return page.
+        $wc_notices = WC()->session->get('wc_notices', array());
+        if (($session_id = get_transient('micuentaweb_session_id')) && ! empty($wc_notices)) {
+            MicuentawebTools::set_transient('micuentaweb_notices_' . $session_id, json_encode($wc_notices));
+            delete_transient('micuentaweb_session_id');
+        }
+
+        wp_redirect($url);
+
+        exit();
+    }
+
+    public static function micuentaweb_add_order_note($micuentaweb_response, $order)
+    {
+        $note = $micuentaweb_response->getCompleteMessage("\n");
+
+        if ($micuentaweb_response->get('brand_management')) {
+            $brand_info = json_decode($micuentaweb_response->get('brand_management'));
+            $msg_brand_choice = "\n";
+
+            if (isset($brand_info->userChoice) && $brand_info->userChoice) {
+                $msg_brand_choice .= __('Card brand chosen by buyer.', 'woo-micuentaweb-payment');
+            } else {
+                $msg_brand_choice .= __('Default card brand used.', 'woo-micuentaweb-payment');
+            }
+
+            $note .= $msg_brand_choice;
+        }
+
+        $order->add_order_note($note);
+
+        // 3DS extra message.
+        $note = __('3DS authentication: ', 'woo-micuentaweb-payment');
+        if ($status = $micuentaweb_response->get('threeds_status')) {
+            $note .= self::get_threeds_status($status);
+
+            if ($threeds_cavv = $micuentaweb_response->get('threeds_cavv')) {
+                $note .= "\n";
+                $note .= __('3DS certificate: ', 'woo-micuentaweb-payment') . $threeds_cavv;
+            }
+
+            if ($threeds_auth_type = $micuentaweb_response->get('threeds_auth_type')) {
+                $note .= "\n";
+                $note .= __('Authentication type: ', 'woo-micuentaweb-payment') . $threeds_auth_type;
+            }
+        } else {
+            $note .= 'UNAVAILABLE';
+        }
+
+        $order->add_order_note($note);
+
+        if (! $micuentaweb_response->isCancelledPayment()) {
+            if ($micuentaweb_response->get('card_brand') == 'MULTI' && $micuentaweb_response->get('payment_seq')) {
+                $payment_seq = json_decode($micuentaweb_response->get('payment_seq'), true);
+                foreach ($payment_seq['transactions'] as $payment) {
+                    $note = sprintf(__('Transaction ID: %s.', 'woo-micuentaweb-payment'), $payment['trans_id'] . '-' . $payment['sequence_number']);
+
+                    if ($payment['trans_uuid']) {
+                        $note .= "\n";
+                        $note .= sprintf(__('Transaction UUID: %s.', 'woo-micuentaweb-payment'), $payment['trans_uuid']);
+                    }
+
+                    if ($payment['trans_status']) {
+                        $note .= "\n";
+                        $note .= sprintf(__('Transaction status: %s.', 'woo-micuentaweb-payment'), $payment['trans_status']);
+                    }
+
+                    $order->add_order_note($note);
+                }
+            } else {
+                $note = sprintf(__('Transaction ID: %s.', 'woo-micuentaweb-payment'), $micuentaweb_response->get('trans_id'));
+
+                if ($micuentaweb_response->get('trans_uuid')) {
+                    $note .= "\n";
+                    $note .= sprintf(__('Transaction UUID: %s.', 'woo-micuentaweb-payment'), $micuentaweb_response->get('trans_uuid'));
+                }
+
+                if ($micuentaweb_response->getTransStatus()) {
+                    $note .= "\n";
+                    $note .= sprintf(__('Transaction status: %s.', 'woo-micuentaweb-payment'), $micuentaweb_response->getTransStatus());
+                }
+
+                $order->add_order_note($note);
+            }
+        }
+    }
+
+    public static function micuentaweb_update_order_meta($micuentaweb_response, $order)
+    {
+        if (MicuentawebTools::is_hpos_enabled()) {
+            // Clear payment options.
+            $order->delete_meta_data('micuentawebfranfinance_option');
+            $order->delete_meta_data('micuentawebmulti_option');
+            $order->delete_meta_data('micuentawebstd_card_type');
+            $order->delete_meta_data('micuentawebmulti_card_type');
+            $order->delete_meta_data('micuentawebregroupedother_card_type');
+            $order->delete_meta_data(self::METHOD_ID);
+
+            // Delete old saved transaction details.
+            $order->delete_meta_data('Transaction ID');
+            $order->delete_meta_data('Card number');
+            $order->delete_meta_data('IBAN / BIC');
+            $order->delete_meta_data('Means of payment');
+            $order->delete_meta_data('Card expiry');
+            $order->delete_meta_data('Sequence number');
+
+            // Store transaction details.
+            $order->update_meta_data('Transaction ID', $micuentaweb_response->get('trans_id'));
+            $order->update_meta_data('Means of payment', $micuentaweb_response->get('card_brand'));
+            $order->update_meta_data('Sequence number', $micuentaweb_response->get('sequence_number'));
+
+            if ($micuentaweb_response->get('card_brand') === 'SDD') {
+                $order->update_meta_data('IBAN / BIC', $micuentaweb_response->get('card_number'));
+            }  else {
+                $order->update_meta_data('Card number', $micuentaweb_response->get('card_number'));
+            }
+
+            // Store authorized amount.
+            if ($authorized_amount = $micuentaweb_response->get('authorized_amount')) {
+                $order->delete_meta_data('Authorized amount');
+                $order->update_meta_data('Authorized amount', self::display_amount($authorized_amount, $micuentaweb_response->get('currency')));
+            }
+
+            // Store installments number/config.
+            if (($installments_number = $micuentaweb_response->get('payment_option_code')) && is_numeric($installments_number)) {
+                $order->delete_meta_data('Installments number');
+                $order->update_meta_data('Installments number', $installments_number);
+            }
+
+            $expiry = '';
+            if ($micuentaweb_response->get('expiry_month') && $micuentaweb_response->get('expiry_year')) {
+                $expiry = str_pad($micuentaweb_response->get('expiry_month'), 2, '0', STR_PAD_LEFT) . '/' . $micuentaweb_response->get('expiry_year');
+            }
+
+            $order->update_meta_data('Card expiry', $expiry);
+            $order->save();
+        } else {
+            $order_id = (int) $micuentaweb_response->get('order_id');
+
+            // Clear payment options.
+            delete_post_meta($order_id, 'micuentawebfranfinance_option');
+            delete_post_meta($order_id, 'micuentawebmulti_option');
+            delete_post_meta($order_id, 'micuentawebstd_card_type');
+            delete_post_meta($order_id, 'micuentawebmulti_card_type');
+            delete_post_meta($order_id, 'micuentawebregroupedother_card_type');
+            delete_post_meta($order_id, self::METHOD_ID);
+
+            // Delete old saved transaction details.
+            delete_post_meta($order_id, 'Transaction ID');
+            delete_post_meta($order_id, 'Card number');
+            delete_post_meta($order_id, 'IBAN / BIC');
+            delete_post_meta($order_id, 'Means of payment');
+            delete_post_meta($order_id, 'Card expiry');
+            delete_post_meta($order_id, 'Sequence number');
+
+            // Store transaction details.
+            update_post_meta($order_id, 'Transaction ID', $micuentaweb_response->get('trans_id'));
+            update_post_meta($order_id, 'Means of payment', $micuentaweb_response->get('card_brand'));
+            update_post_meta($order_id, 'Sequence number', $micuentaweb_response->get('sequence_number'));
+
+            if ($micuentaweb_response->get('card_brand') === 'SDD') {
+                update_post_meta($order_id, 'IBAN / BIC', $micuentaweb_response->get('card_number'));
+            }  else {
+                update_post_meta($order_id, 'Card number', $micuentaweb_response->get('card_number'));
+            }
+
+            // Store authorized amount.
+            if ($authorized_amount = $micuentaweb_response->get('authorized_amount')) {
+                delete_post_meta($order_id, 'Authorized amount');
+                update_post_meta($order_id, 'Authorized amount', self::display_amount($authorized_amount, $micuentaweb_response->get('currency')));
+            }
+
+            // Store installments number/config.
+            if (($installments_number = $micuentaweb_response->get('payment_option_code')) && is_numeric($installments_number)) {
+                delete_post_meta($order_id, 'Installments number');
+                update_post_meta($order_id, 'Installments number', $installments_number);
+            }
+
+            $expiry = '';
+            if ($micuentaweb_response->get('expiry_month') && $micuentaweb_response->get('expiry_year')) {
+                $expiry = str_pad($micuentaweb_response->get('expiry_month'), 2, '0', STR_PAD_LEFT) . '/' . $micuentaweb_response->get('expiry_year');
+            }
+
+            update_post_meta($order_id, 'Card expiry', $expiry);
+        }
+    }
+
+    private static function get_threeds_status($status)
+    {
+        switch ($status) {
+            case 'Y':
+                return 'SUCCESS';
+
+            case 'N':
+                return 'FAILED';
+
+            case 'U':
+                return 'UNAVAILABLE';
+
+            case 'A':
+                return 'ATTEMPT';
+
+            default :
+                return $status;
+        }
+    }
+
+    public static function restore_wc_notices() {
+        if (is_admin()) {
+            return;
+        }
+
+        if (WC()->session && empty(WC()->session->get('wc_notices', array())) && get_transient('micuentaweb_notices_' . wp_get_session_token())) {
+            wc_set_notices(json_decode(get_transient('micuentaweb_notices_' . wp_get_session_token()), true));
+            delete_transient('micuentaweb_notices_' . wp_get_session_token());
+        }
+    }
+
+    public function micuentaweb_notices($template_name, $template_path, $located, $args = array())
+    {
+        global $woocommerce;
+
+        if (! isset($args['order']) || ($template_name !== 'checkout/thankyou.php')) {
+            return;
+        }
+
+        $this->display_notices($args['order']);
+    }
+
+    public function micuentaweb_thankyou($order_id)
+    {
+        $order = wc_get_order($order_id);
+
+        $this->display_notices($order);
+    }
+
+    protected function display_notices($order)
+    {
+        global $woocommerce;
+
+        // Display notices in case of successful payment.
+        $payment_method = self::get_order_property($order, 'payment_method');
+        if ($payment_method && strpos($payment_method, 'micuentaweb') === 0) {
+            if (MicuentawebTools::has_checkout_block()) {
+                self::restore_wc_notices();
+            }
+
+            if (function_exists('wc_print_notices')) {
+                wc_print_notices();
+            } else {
+                $woocommerce->show_messages();
+            }
+
+            $this->clear_notices();
+        }
+    }
+
+    private static function get_success_order_statuses($default = false, $subscriptions_handler = false)
+    {
+        $statuses = array();
+
+        if (function_exists('wc_get_order_statuses')) { // From WooCommerce 2.2.0.
+            $other_statues = array('pending', 'cancelled', 'refunded', 'failed');
+
+            foreach (wc_get_order_statuses() as $key => $value) {
+                $status = substr($key, 3);
+
+                if (in_array($status, $other_statues)) {
+                    continue;
+                }
+
+                $statuses[$status] = $value;
+            }
+        } else {
+            $statuses = array(
+                'on-hold' => __('On Hold', 'woo-micuentaweb-payment'),
+                'processing' => __('Processing', 'woo-micuentaweb-payment'),
+                'completed' => __('Complete', 'woo-micuentaweb-payment')
+            );
+        }
+
+        if ($default) {
+            $statuses = array('default' => __('Default', 'woo-micuentaweb-payment')) + $statuses;
+        }
+
+        // Add success subscriptions statuses.
+        $subscription_success_statuses = array('active');
+
+        if ($subscriptions_handler) {
+            foreach ($subscriptions_handler->get_subscription_statuses() as $key => $value) {
+                $status = substr($key, 3);
+
+                if (in_array($status, $subscription_success_statuses)) {
+                    $statuses[$status] = $value;
+                }
+            }
+        }
+
+        return $statuses;
+    }
+
+    public static function is_successful_action($micuentaweb_response)
+    {
+        if ($micuentaweb_response->isAcceptedPayment()) {
+            return true;
+        }
+
+        // This is a backward compatibility feature: it is used as a workarround as long as transcation
+        // creation on REGISTER in not enabled on payment gateway.
+        if ($micuentaweb_response->get('subscription') && ($micuentaweb_response->get('recurrence_status') === 'CREATED')) {
+            return true;
+        }
+
+        if (! $micuentaweb_response->getExtInfo('is_rest') && $micuentaweb_response->get('identifier') && (
+            $micuentaweb_response->get('identifier_status') == 'CREATED' /* page_action is REGISTER_PAY or ASK_REGISTER_PAY */ ||
+            $micuentaweb_response->get('identifier_status') == 'UPDATED' /* page_action is REGISTER_UPDATE_PAY */
+        )) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function micuentaweb_save_token($micuentaweb_response)
+    {
+        if (($micuentaweb_response->get('identifier_status') != 'CREATED') && ($micuentaweb_response->get('identifier_status') != 'UPDATED')) {
+            return;
+        }
+
+        $number = $micuentaweb_response->get('card_number');
+        preg_match('#^([A-Z]{2}[0-9]{2}[A-Z0-9]{10,30})(_[A-Z0-9]{8,11})?$#i', $number, $matches);
+
+        // IBAN(_BIC).
+        $iban = $matches[1];
+
+        $customer_id = $micuentaweb_response->get('cust_id');
+        $this->log("Identifier for customer #{$customer_id} successfully created or updated on payment gateway for SEPA Payment submodule. Let's save it and save IBAN / BIC.");
+
+        $new_identifier = true;
+
+        if ($micuentaweb_response->get('identifier_status') == 'UPDATED') {
+            $tokens = WC_Payment_Tokens::get_customer_tokens($customer_id, 'micuentawebsepa');
+
+            if (! empty($tokens) && is_array($tokens)) {
+                foreach ($tokens as $token) {
+                    if ($token->get_token() === $micuentaweb_response->get('identifier')) {
+                        $new_identifier = false;
+                    }
+                }
+            }
+        }
+
+        if ($new_identifier) {
+            $token = new WC_Payment_Token_Micuentaweb_SEPA();
+            $token->set_user_id($customer_id);
+            $token->set_gateway_id('micuentawebsepa');
+            $token->set_token($micuentaweb_response->get('identifier'));
+        }
+
+        if ($token) {
+            $token->set_last4(substr($iban, - 4));
+            $token->save();
+
+            $this->log("Identifier for customer #{$micuentaweb_response->get('cust_id')} for SEPA Payment submodule has been successfully saved.");
+        }
+    }
+
+    private function micuentaweb_save_identifier($order, $micuentaweb_response, $force_update = false)
+    {
+        $cust_id = self::get_order_property($order, 'user_id');
+        if (! $cust_id) {
+            return;
+        }
+
+        if ($micuentaweb_response->get('identifier') && ($micuentaweb_response->getExtInfo('is_sepa') ||
+            $force_update || (
+            $micuentaweb_response->get('identifier_status') == 'CREATED' /* page_action is REGISTER_PAY or ASK_REGISTER_PAY */ ||
+            $micuentaweb_response->get('identifier_status') == 'UPDATED' /* page_action is REGISTER_UPDATE_PAY */
+        ))) {
+            // Store subscription details.
+            $subsc_id = $micuentaweb_response->getExtInfo('subsc_id') ? $micuentaweb_response->getExtInfo('subsc_id') : $micuentaweb_response->get('order_id');
+            $this->log("Saving identifier for order #$subsc_id in meta data.");
+
+            if (MicuentawebTools::is_hpos_enabled()) {
+                $subscription = wc_get_order($subsc_id);
+                $subscription->update_meta_data('micuentaweb_token', $micuentaweb_response->get('identifier'));
+                $subscription->save();
+            } else {
+                update_post_meta($subsc_id, 'micuentaweb_token', $micuentaweb_response->get('identifier'));
+            }
+
+            if (function_exists('wcs_get_subscriptions_for_order')) {
+                if ($micuentaweb_response->getExtInfo('update_identifier_all')) {
+                    // Update payment identifier for all subscriptions for the customer.
+                    $subscriptions = wcs_get_subscriptions(array('customer_id' => $cust_id));
+                } else {
+                    // Update payment identifier for all subscriptions for the order.
+                    $subscriptions = wcs_get_subscriptions_for_order($order);
+                }
+
+                foreach ($subscriptions as $subscription) {
+                    if (MicuentawebTools::is_hpos_enabled()) {
+                        $subscription->update_meta_data('micuentaweb_token', $micuentaweb_response->get('identifier'));
+                        $subscription->save();
+                    } else {
+                        update_post_meta($subscription->get_id(), 'micuentaweb_token', $micuentaweb_response->get('identifier'));
+                    }
+                }
+            }
+
+            if ($micuentaweb_response->getExtInfo('is_customer_wallet')) {
+                return;
+            }
+
+            if ($micuentaweb_response->getExtInfo('is_sepa')) {
+                $this->micuentaweb_save_token($micuentaweb_response);
+                return;
+            }
+
+            $this->log("Identifier for customer #{$cust_id} successfully created or updated on payment gateway. Let's save it and save masked card and expiry date.");
+
+            $identifier_info = array(
+                'identifier' => $micuentaweb_response->get('identifier'),
+                'active' => true
+            );
+
+            update_user_meta((int) $cust_id, self::get_order_property($order, 'payment_method') . '_identifier', json_encode($identifier_info));
+
+            // Mask all card digits unless the last 4 ones.
+            $number = $micuentaweb_response->get('card_number');
+            $masked = '';
+
+            $matches = array();
+            if (preg_match('#^([A-Z]{2}[0-9]{2}[A-Z0-9]{10,30})(_[A-Z0-9]{8,11})?$#i', $number, $matches)) {
+                // IBAN(_BIC).
+                $masked .= isset($matches[2]) ? str_replace('_', '', $matches[2]) . ' / ' : ''; // BIC.
+
+                $iban = $matches[1];
+                $masked .= substr($iban, 0, 4) . str_repeat('X', strlen($iban) - 8) . substr($iban, - 4);
+            } elseif (strlen($number) > 4) {
+                $masked = $micuentaweb_response->get('card_brand') . '|' .  str_repeat('X', strlen($number) - 4) . substr($number, - 4);
+
+                if ($micuentaweb_response->get('expiry_month') && $micuentaweb_response->get('expiry_year')) {
+                    // Format card expiration data.
+                    $masked .= ' (';
+                    $masked .= str_pad($micuentaweb_response->get('expiry_month'), 2, '0', STR_PAD_LEFT);
+                    $masked .= '/';
+                    $masked .= $micuentaweb_response->get('expiry_year');
+                    $masked .= ')';
+                }
+            }
+
+            update_user_meta((int) $cust_id, self::get_order_property($order, 'payment_method') . '_masked_pan', $masked);
+
+            $this->log("Identifier for customer #{$cust_id} and their masked PAN data are successfully saved.");
+        }
+    }
+
+    private function micuentaweb_save_recurrence($order, $micuentaweb_response, $force_update = false)
+    {
+        $order_id = (int) self::get_order_property($order, 'id');
+
+        if ($micuentaweb_response->get('subscription') && ($force_update || $micuentaweb_response->get('recurrence_status') === 'CREATED')) {
+            $this->log("Subscription for order #{$order_id} successfully created on payment gateway. Let's save subscription information.");
+
+            $currency_code = $micuentaweb_response->get('sub_currency');
+
+            if (MicuentawebTools::is_hpos_enabled()) {
+                $order->delete_meta_data('Subscription ID');
+                $order->delete_meta_data('Subscription amount');
+                $order->delete_meta_data('Effect date');
+                $order->delete_meta_data('Initial amount');
+                $order->delete_meta_data('Initial amount count');
+
+                // Store subscription details.
+                $order->update_meta_data('Subscription ID', $micuentaweb_response->get('subscription'));
+                $order->update_meta_data('Subscription amount', self::display_amount($micuentaweb_response->get('sub_amount'), $currency_code));
+                $order->update_meta_data('Effect date', preg_replace('#^(\d{4})(\d{2})(\d{2})$#', '\1-\2-\3', $micuentaweb_response->get('sub_effect_date')));
+
+                if ($micuentaweb_response->get('sub_init_amount')) {
+                    $order->update_meta_data('Initial amount', self::display_amount($micuentaweb_response->get('sub_init_amount'), $currency_code));
+                    $order->update_meta_data('Initial amount count', $micuentaweb_response->get('sub_init_amount_number'));
+                }
+
+                $order->save();
+            } else {
+                delete_post_meta($order_id, 'Subscription ID');
+                delete_post_meta($order_id, 'Subscription amount');
+                delete_post_meta($order_id, 'Effect date');
+                delete_post_meta($order_id, 'Initial amount');
+                delete_post_meta($order_id, 'Initial amount count');
+
+                // Store subscription details.
+                update_post_meta($order_id, 'Subscription ID', $micuentaweb_response->get('subscription'));
+                update_post_meta($order_id, 'Subscription amount', self::display_amount($micuentaweb_response->get('sub_amount'), $currency_code));
+                update_post_meta($order_id, 'Effect date', preg_replace('#^(\d{4})(\d{2})(\d{2})$#', '\1-\2-\3', $micuentaweb_response->get('sub_effect_date')));
+
+                if ($micuentaweb_response->get('sub_init_amount')) {
+                    update_post_meta($order_id, 'Initial amount', self::display_amount($micuentaweb_response->get('sub_init_amount'), $currency_code));
+                    update_post_meta($order_id, 'Initial amount count', $micuentaweb_response->get('sub_init_amount_number'));
+                }
+            }
+
+            $this->log("Subscription information for order #{$order_id} is successfully saved.");
+        }
+    }
+
+    public static function display_amount($amount_in_cents, $currency_code)
+    {
+        if (! $amount_in_cents) {
+            return '';
+        }
+
+        $currency = MicuentawebApi::findCurrencyByNumCode($currency_code, MicuentawebTools::get_white_label());
+        return $currency->convertAmountToFloat($amount_in_cents) . ' ' . $currency->getAlpha3();
+    }
+
+    private static function subscriptions_handler($method)
+    {
+        if (! $method || $method !== 'micuentawebsubscription') {
+            return null;
+        }
+
+        $settings = get_option('woocommerce_micuentawebsubscription_settings', null);
+
+        $handler = is_array($settings) && isset($settings['subscriptions']) ? $settings['subscriptions'] : null;
+        return Micuentaweb_Subscriptions_Loader::getInstance($handler);
+    }
+
+    public function micuentaweb_delete_saved_identifier()
+    {
+        global $woocommerce;
+
+        if (! is_user_logged_in()) {
+            return;
+        }
+
+        $cust_id = self::get_customer_property($woocommerce->customer, 'id');
+
+        if (isset($_POST['token']) && $_POST['token']) {
+            delete_transient('micuentaweb_account_token_data_' . $cust_id);
+            delete_transient('micuentaweb_account_token_' . $cust_id);
+
+            $sub_modules = array('micuentawebstd', 'micuentawebsepa', 'micuentawebsubscription', 'micuentawebwcssubscription');
+            foreach ($sub_modules as $id) {
+                if ($_POST['token'] == $this->get_cust_identifier($cust_id, $id)) {
+                    $this->delete_identifier_attributes($cust_id, $id);
+                    break;
+                }
+            }
+         } elseif (isset($_GET['delete-saved-card']) && $_GET['delete-saved-card']) {
+             $id = $_GET['delete-saved-card'];
+
+             if (! $saved_identifier = $this->get_cust_identifier($cust_id, $id)) {
+                $this->log("Error: Customer {$woocommerce->customer->get_billing_email()} doesn't have a saved identifier for \"{$id}\" submodule");
+                wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
+                exit();
+             }
+
+             $this->delete_identifier_online($saved_identifier, $cust_id, $id);
+        }
+
+        wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
+        exit();
+    }
+
+    public function delete_identifier_online($identifier, $cust_id, $id, $delete_attributes = true)
+    {
+        global $woocommerce;
+
+        try {
+            $key = $this->testmode ? $this->get_general_option('test_private_key') : $this->get_general_option('prod_private_key');
+            if ($key) {
+                $request_data = array(
+                    'paymentMethodToken' => $identifier
+                );
+
+                $client = new MicuentawebRest(
+                    MicuentawebTools::get_white_label_url(self::REST_URL),
+                    $this->get_general_option('site_id'),
+                    $key
+                );
+
+                $result = $client->post('V4/Token/Cancel', json_encode($request_data));
+                MicuentawebRestTools::checkResult($result);
+
+                // Payment identifier cancelled successfully.
+                $this->log("Payment identifier cancelled successfully on payment gateway by user: {$woocommerce->customer->get_billing_email()}, for " . $id . " submodule.");
+            } else {
+                // Client has not configured private key in module backend.
+                $this->log("Identifier for customer {$woocommerce->customer->get_billing_email()}, for " . $id . " submodule, cannot be deleted on gateway: private key is not configured. Let's just delete it from WooCommerce.");
+            }
+
+            // Delete identifier from WooCommerce.
+            if ($delete_attributes) {
+                $this->delete_identifier_attributes($cust_id, $id);
+            }
+        } catch (Exception $e) {
+            $invalid_ident_codes = array('PSP_030', 'PSP_031', 'SP_561', 'PSP_607');
+
+            if ($delete_attributes && in_array($e->getCode(), $invalid_ident_codes)) {
+                // The identifier is invalid or doesn't exist.
+                $this->log("Identifier for customer {$woocommerce->customer->get_billing_email()}, for " . $id . " submodule, is invalid or doesn't exist. Let's delete it from WooCommerce");
+
+                // Delete identifier from WooCommerce.
+                $this->delete_identifier_attributes($cust_id, $id);
+            } else {
+                $this->log("Identifier for customer {$woocommerce->customer->get_billing_email()}, for " . $id . " submodule, couldn't be deleted on gateway. Error occurred: {$e->getMessage()}");
+                $this->add_notice(__('The stored means of payment could not be deleted.', 'woo-micuentaweb-payment'), 'error');
+            }
+        }
+    }
+
+    function micuentaweb_delete_order_with_status_failed($order_id)
+    {
+        // Get an instance of the order object.
+        $order = wc_get_order($order_id);
+
+        if (($this->get_general_option('delete_order_on_failure') == 'yes')
+            && (strpos(self::get_order_property($order, 'payment_method'), 'micuentaweb') === 0)
+            && $order && in_array($order->get_status(), ['failed'])) {
+                if (MicuentawebTools::is_hpos_enabled()) {
+                    $order->delete(true);
+                } else {
+                    wp_delete_post($order_id, true);
+                }
+
+                $this->log("Order #$order_id with failed status was deleted successfully.");
+            }
+    }
+
+    function micuentaweb_get_account_saved_payment_methods_list($list, $cust_id)
+    {
+        if (! is_add_payment_method_page()) {
+            return $list;
+        }
+
+        $sub_modules = array('micuentawebsubscription');
+
+        $micuentawebwcs_settings = get_option('woocommerce_micuentawebwcssubscription_settings', null);
+        $isWcsActive = $micuentawebwcs_settings && isset($micuentawebwcs_settings['enabled']) && $micuentawebwcs_settings['enabled'] == 'yes';
+        if ($isWcsActive && MicuentawebTools::use_wallet($cust_id, 'micuentawebwcssubscription')) {
+            return $list;
+        } else {
+            $sub_modules[] = 'micuentawebwcssubscription';
+        }
+
+        if (MicuentawebTools::use_wallet($cust_id)) {
+            return $list;
+        } else {
+            $sub_modules[] = 'micuentawebstd';
+        }
+
+        foreach ($sub_modules as $id) {
+            $saved_masked_pan = get_user_meta((int) $cust_id, $id . '_masked_pan', true);
+
+            if ($saved_masked_pan) {
+                $card_brand_pos = strpos($saved_masked_pan, '|');
+                $expiry_start_pos = strpos($saved_masked_pan, '(');
+                $expiry_end_pos = strpos($saved_masked_pan, ')');
+                $card_number = substr($saved_masked_pan, $card_brand_pos + 1, $expiry_start_pos - $card_brand_pos - 2);
+                $expiry_date = substr($saved_masked_pan, $expiry_start_pos + 1, $expiry_end_pos - $expiry_start_pos -1);
+                $delete_url = add_query_arg(array(
+                    'wc-api' => 'WC_Gateway_Micuentaweb_Delete_Saved_Identifier',
+                    'delete-saved-card' => $id
+                ), home_url('/'));
+
+                $type = 'cc';
+                $saved_card = array(
+                    'method' => array(
+                        'gateway' => $id,
+                        'last4' => str_replace('X', '', $card_number),
+                        'brand' => substr($saved_masked_pan, 0, strpos($saved_masked_pan, '|'))
+                    ),
+                    'expires' => $expiry_date,
+                    'is_default' => false,
+                    'actions' => array(
+                        'delete' => array(
+                            'url' => $delete_url,
+                            'name' => esc_html__('Delete', 'woocommerce')
+                        ),
+                    ),
+                );
+
+                if (isset($list[$type])) {
+                    array_push($list[$type], $saved_card);
+                } else {
+                    $list[$type][] = $saved_card;
+                }
+            }
+        }
+
+        return $list;
+    }
+
+    private function delete_identifier_attributes($cust_id, $id)
+    {
+        global $woocommerce;
+
+        // Delete local saved means of payment and saved identifier.
+        delete_user_meta((int) $cust_id, $id . '_identifier');
+        delete_user_meta((int) $cust_id, $id . '_masked_pan');
+
+        // Payment identifier cancelled successfully.
+        $this->log("Payment identifier and masked card and expiry date were deleted successfully by user: {$woocommerce->customer->get_billing_email()} for " . $id . " submodule.");
+        $this->add_notice(__('The stored means of payment was successfully deleted.', 'woo-micuentaweb-payment'));
+    }
+
+    protected function get_cust_identifier($cust_id, $id = null)
+    {
+        $id = $id ? $id : $this->id;
+        $saved_identifier = get_user_meta((int) $cust_id, $id . '_identifier', true);
+        $saved_identifier_decode = json_decode($saved_identifier, true);
+        if (json_last_error() == JSON_ERROR_NONE) {
+            return $saved_identifier_decode['identifier'];
+        }
+
+        return $saved_identifier;
+    }
+
+    protected function is_cust_identifier_active($cust_id, $id = null)
+    {
+        $id = $id ? $id : $this->id;
+        $saved_identifier = get_user_meta((int) $cust_id, $id . '_identifier', true);
+        $saved_identifier_decode = json_decode($saved_identifier, true);
+        if (json_last_error() == JSON_ERROR_NONE) {
+            return $saved_identifier_decode['active'];
+        }
+
+        return true;
+    }
+
+    protected function update_custidentifier($cust_id, $identifier, $active, $id = null)
+    {
+        $id = $id ? $id : $this->id;
+        if ($id === 'micuentawebsepa') {
+            return;
+        }
+
+        $identifier_info = array(
+            'identifier' => $identifier,
+            'active' => $active
+        );
+
+        update_user_meta((int) $cust_id, $id . '_identifier', json_encode($identifier_info));
+    }
+
+    protected function check_identifier($cust_id, $id, $identifier_to_check = null)
+    {
+        $identifier = $identifier_to_check ? $identifier_to_check : $this->get_cust_identifier($cust_id);
+
+        if (! $identifier) {
+            // Customer has no saved identifier.
+            return false;
+        }
+
+        $customer = new WC_Customer($cust_id);
+        if (! $customer) {
+            return false;
+        }
+
+        try {
+            $request_data = array(
+                'paymentMethodToken' => $identifier
+            );
+
+            // Perform REST request to check identifier.
+            $key = $this->testmode ? $this->get_general_option('test_private_key') : $this->get_general_option('prod_private_key');
+            $client = new MicuentawebRest(
+                MicuentawebTools::get_white_label_url(self::REST_URL),
+                $this->get_general_option('site_id'),
+                $key
+            );
+
+            $result = $client->post('V4/Token/Get', json_encode($request_data));
+            MicuentawebRestTools::checkResult($result);
+
+            $cancellation_date = MicuentawebRestTools::getProperty($result['answer'], 'cancellationDate');
+            if ($cancellation_date && (strtotime($cancellation_date) <= time())) {
+                $this->log("Identifier for customer {$customer->get_billing_email()}, for {$id} submodule, is expired on payment gateway in date of: {$cancellation_date}.");
+
+                // Update Customer identifier validity.
+                $this->update_custidentifier($cust_id, $identifier, false, $id);
+                return false;
+            }
+
+            // Update Customer identifier validity.
+            $this->update_custidentifier($cust_id, $identifier, true, $id);
+            return true;
+        } catch (Exception $e) {
+            $invalid_ident_codes = array('PSP_030', 'PSP_031', 'PSP_561', 'PSP_607', 'INT_905');
+
+            if (in_array($e->getCode(), $invalid_ident_codes, true)) {
+                // The identifier is invalid or doesn't exist.
+                $this->log("Identifier for customer {$customer->get_billing_email()}, for {$id} submodule, is invalid or doesn't exist: {$e->getMessage()}");
+
+                // Update Customer identifier validity.
+                $this->update_custidentifier($cust_id, $identifier, false, $id);
+                return false;
+            }
+
+            $this->log("Identifier for customer {$customer->get_billing_email()}, for " . $id . " submodule, couldn't be verified on gateway: {$e->getMessage()}.");
+            return true;
+        }
+    }
+
+    public function get_option_metadata($option_name, $order, $is_array = true)
+    {
+        $order_id = self::get_order_property($order, 'id');
+        if (MicuentawebTools::is_hpos_enabled()) {
+            $option= $order->get_meta($option_name, true);
+        } else {
+            $option = get_post_meta($order_id, $option_name, true);
+        }
+
+        return $is_array ? json_decode($option, true) : $option;
+    }
+
+    private function set_payment_method($order)
+    {
+        $order_id = self::get_order_property($order, 'id');
+
+        if (MicuentawebTools::is_hpos_enabled()) {
+            $micuentaweb_method = $order->get_meta(self::METHOD_ID, true);
+            if ($micuentaweb_method) {
+                $order->set_payment_method($micuentaweb_method);
+            }
+        } else {
+            $micuentaweb_method = get_post_meta($order_id, self::METHOD_ID, true);
+            if ($micuentaweb_method) {
+                $order->payment_method = get_post_meta($order_id, self::METHOD_ID, true);
+            }
+        }
+
+        $order->save();
+    }
+}

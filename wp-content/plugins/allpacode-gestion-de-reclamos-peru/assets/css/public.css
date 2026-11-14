@@ -1,0 +1,357 @@
+.allpacode-gr,
+.allpacode-gr * {
+	box-sizing: border-box;
+}
+
+.allpacode-gr {
+	--bg: transparent;
+	--field: #fff;
+	--text: #182421;
+	--muted: #6b7280;
+	--line: #e5e7eb;
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	color: var(--text);
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	font-family: inherit;
+	line-height: 1.45;
+	text-align: left;
+}
+
+.allpacode-gr-dark {
+	--field: #172033;
+	--text: #f8fafc;
+	--muted: #cbd5e1;
+	--line: #334155;
+}
+
+.allpacode-gr__header {
+	margin: 0 0 18px;
+}
+
+.allpacode-gr__header p {
+	margin: 0 0 6px;
+	color: var(--muted);
+	font-weight: 700;
+	text-transform: uppercase;
+	font-size: 12px;
+	letter-spacing: 0;
+}
+
+.allpacode-gr__header h2 {
+	margin: 0;
+	font-size: 24px;
+	line-height: 1.18;
+	color: var(--text);
+	font-weight: 800;
+	letter-spacing: 0;
+}
+
+.allpacode-gr__section {
+	padding: 18px 0 0;
+	margin: 18px 0 0;
+	border-top: 1px solid var(--line);
+}
+
+.allpacode-gr__form .allpacode-gr__section:first-of-type {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0;
+}
+
+.allpacode-gr__section h3 {
+	font-size: 18px;
+	line-height: 1.25;
+	margin: 0 0 18px;
+	color: var(--text);
+	font-weight: 800;
+	letter-spacing: 0;
+}
+
+.allpacode-gr__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	align-items: start;
+}
+
+.allpacode-gr label {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.35;
+	font-weight: 700;
+	color: var(--text);
+}
+
+.allpacode-gr__label-text {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 4px;
+	width: fit-content;
+}
+
+.allpacode-gr__required {
+	display: inline;
+	color: #dc2626;
+	font-size: 16px;
+	line-height: 1;
+	font-weight: 800;
+}
+
+.allpacode-gr__wide {
+	grid-column: 1 / -1;
+}
+
+.allpacode-gr__ubigeo .allpacode-ubigeo {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.allpacode-gr__ubigeo .allpacode-ubigeo label {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.35;
+	font-weight: 700;
+	color: var(--text);
+}
+
+.allpacode-gr input,
+.allpacode-gr select,
+.allpacode-gr textarea,
+.allpacode-gr__ubigeo .allpacode-ubigeo select {
+	width: 100%;
+	max-width: 100%;
+	min-height: 48px;
+	box-sizing: border-box;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 12px 14px;
+	background-color: var(--field);
+	color: var(--text);
+	font: inherit;
+	font-size: 15px;
+	line-height: 1.4;
+	box-shadow: none;
+	outline: none;
+	position: relative;
+	z-index: 1;
+}
+
+.allpacode-gr select,
+.elementor .allpacode-gr select,
+.elementor-widget-allpacode_gestion_reclamos .allpacode-gr select,
+.elementor-widget-allpacode_gestion_reclamos .allpacode-gr select {
+	display: block !important;
+	appearance: auto !important;
+	-webkit-appearance: menulist !important;
+	-moz-appearance: menulist !important;
+	pointer-events: auto !important;
+	user-select: auto !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+	cursor: pointer !important;
+	padding-right: 12px !important;
+	background-image: none !important;
+}
+
+.allpacode-gr select option {
+	color: #111827;
+	background: #fff;
+}
+
+.allpacode-gr select + .nice-select,
+.allpacode-gr select + .select2,
+.allpacode-gr select + .select2-container,
+.allpacode-gr select + .chosen-container,
+.allpacode-gr select + .selectric-wrapper,
+.allpacode-gr select + .choices,
+.allpacode-gr select + .ts-wrapper,
+.allpacode-gr select + .dropdown,
+.allpacode-gr .allpacode-gr__select-clone {
+	display: none !important;
+	visibility: hidden !important;
+	pointer-events: none !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+}
+
+.allpacode-gr textarea {
+	min-height: 118px;
+	resize: vertical;
+}
+
+.allpacode-gr input[type="checkbox"] {
+	appearance: auto;
+	-webkit-appearance: checkbox;
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
+	min-height: 18px;
+	margin: 2px 0 0;
+	padding: 0;
+	border-radius: 3px;
+	accent-color: #1f2937;
+	flex: 0 0 18px;
+}
+
+.allpacode-gr input[type="file"] {
+	padding: 9px 12px;
+}
+
+.allpacode-gr input:focus,
+.allpacode-gr select:focus,
+.allpacode-gr textarea:focus {
+	border-color: #9ca3af;
+	box-shadow: 0 0 0 3px rgba(17, 24, 39, .08);
+	outline: none;
+}
+
+.allpacode-gr label.has-error input,
+.allpacode-gr label.has-error select,
+.allpacode-gr label.has-error textarea,
+.allpacode-gr__ubigeo.has-error select {
+	border-color: #dc2626;
+	box-shadow: 0 0 0 3px rgba(220, 38, 38, .10);
+}
+
+.allpacode-gr__field-error {
+	margin-top: -2px;
+	color: #b91c1c;
+	font-size: 13px;
+	line-height: 1.35;
+	font-weight: 700;
+}
+
+.allpacode-gr__legal {
+	border: 1px solid #e8edf4;
+	border-radius: 10px;
+	padding: 16px;
+	margin: 20px 0 18px;
+	background: #f8fafc;
+}
+
+.allpacode-gr__legal p {
+	margin: 0 0 12px;
+	color: var(--muted);
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.allpacode-gr__legal label {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-start;
+	gap: 10px;
+	width: 100%;
+	max-width: 100%;
+	font-weight: 700;
+	text-align: left;
+}
+
+.allpacode-gr__captcha {
+	margin: 0 0 18px;
+	min-height: 65px;
+}
+
+.allpacode-gr .allpacode-gr__submit,
+.allpacode-gr button.allpacode-gr__submit,
+.elementor .allpacode-gr button.allpacode-gr__submit,
+.elementor-widget-allpacode_gestion_reclamos .allpacode-gr button.allpacode-gr__submit,
+.elementor-widget-allpacode_gestion_reclamos .allpacode-gr button.allpacode-gr__submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: auto;
+	min-width: 178px;
+	min-height: 48px;
+	border: 1px solid #111827 !important;
+	border-radius: 8px;
+	padding: 13px 20px;
+	background: #1f2937 !important;
+	color: #fff !important;
+	font: inherit;
+	font-size: 15px;
+	font-weight: 800;
+	text-decoration: none !important;
+	cursor: pointer;
+	box-shadow: none;
+	transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+	-webkit-text-fill-color: #fff !important;
+}
+
+.allpacode-gr .allpacode-gr__submit:hover,
+.allpacode-gr .allpacode-gr__submit:focus,
+.elementor .allpacode-gr button.allpacode-gr__submit:hover,
+.elementor .allpacode-gr button.allpacode-gr__submit:focus {
+	background: #111827 !important;
+	border-color: #111827 !important;
+	color: #fff !important;
+	-webkit-text-fill-color: #fff !important;
+	transform: translateY(-1px);
+}
+
+.allpacode-gr .allpacode-gr__submit:disabled {
+	opacity: .7;
+	cursor: wait;
+	transform: none;
+}
+
+.allpacode-gr__notice {
+	margin-top: 16px;
+	font-weight: 700;
+}
+
+.allpacode-gr__notice.is-success { color: #047857; }
+.allpacode-gr__notice.is-error { color: #b91c1c; }
+
+.allpacode-gr__brand {
+	display: none;
+}
+
+.allpacode-gr__hp {
+	position: absolute;
+	left: -9999px;
+}
+
+.allpacode-gr-compact .allpacode-gr__grid {
+	gap: 12px;
+}
+
+.elementor-editor-active .allpacode-gr,
+.elementor-widget-allpacode_gestion_reclamos .allpacode-gr,
+.elementor-widget-allpacode_gestion_reclamos .allpacode-gr {
+	width: 100%;
+	max-width: 100%;
+}
+
+@media (max-width: 720px) {
+	.allpacode-gr__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.allpacode-gr__ubigeo .allpacode-ubigeo {
+		grid-template-columns: 1fr;
+	}
+
+	.allpacode-gr__header h2 {
+		font-size: 22px;
+	}
+
+	.allpacode-gr .allpacode-gr__submit {
+		width: 100%;
+	}
+}

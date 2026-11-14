@@ -1,0 +1,51 @@
+/*
+ Theme Name:   Woodmart Child
+ Description:  Woodmart Child Theme
+ Author:       XTemos
+ Author URI:   http://xtemos.com
+ Template:     woodmart
+ Version:      1.0.0
+ Text Domain:  woodmart
+*/
+
+.product-labels{
+    display: none !important;
+}
+
+/* Color y diseño del precio normal tachado */
+.woocommerce div.product p.price del, 
+.woocommerce ul.products li.product .price del {
+    color: #4a5568 !important; /* Cambia este color al que prefieras para el texto tachado */
+    text-decoration: none !important; /* Desactivamos el tachado por defecto del navegador */
+    position: relative;
+    display: inline-block;
+}
+
+/* Línea de tachado centrada verticalmente y con el color correcto */
+.woocommerce div.product p.price del::after, 
+.woocommerce ul.products li.product .price del::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 2px; /* Grosor de la línea */
+    background-color: #4a5568 !important; /* Color de la línea de tachado */
+}
+
+.woocommerce del {
+    text-decoration: none !important; /* Desactivamos el tachado nativo */
+    position: relative;
+}
+
+.woocommerce del::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 40%; /* Lo sitúa exactamente a la mitad de la altura */
+    transform: translateY(-40%); /* Centra perfectamente la línea */
+    height: 2px; /* Grosor de la línea */
+    background-color: #4a5568 !important; /* Color de la línea */
+}

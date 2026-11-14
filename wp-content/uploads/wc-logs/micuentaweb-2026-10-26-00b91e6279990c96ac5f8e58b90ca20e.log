@@ -1,0 +1,293 @@
+2026-10-26T14:00:22+00:00 NOTICE Received payment request for order #2337 during checkout processing. CONTEXT: {"_legacy":true}
+2026-10-26T14:00:29+00:00 NOTICE Generating payment form for order #2337. CONTEXT: {"_legacy":true}
+2026-10-26T14:00:29+00:00 NOTICE Data to be sent to payment gateway : Array
+(
+    [signature] => L7cL1PV8gtfOAmrFwI4CoUrnmtvyIzfGRK1Z1PLTp3E=
+    [vads_action_mode] => INTERACTIVE
+    [vads_amount] => 3000
+    [vads_capture_delay] => 
+    [vads_contrib] => WooCommerce_2.x-10.x_1.18.3/7.1.3_11.0.1/8.2.34
+    [vads_ctx_mode] => PRODUCTION
+    [vads_currency] => 604
+    [vads_cust_address] => Pedro Ruiz 827
+    [vads_cust_city] => 
+    [vads_cust_country] => PE
+    [vads_cust_email] => kc2693@gmail.com
+    [vads_cust_first_name] => Kevin
+    [vads_cust_id] => 0
+    [vads_cust_last_name] => Vega
+    [vads_cust_phone] => +51952839030
+    [vads_cust_state] => LMA
+    [vads_cust_status] => 
+    [vads_cust_zip] => LIM_BRENA
+    [vads_cust_national_id] => 
+    [vads_cust_address_number] => 
+    [vads_cust_district] => 
+    [vads_language] => es
+    [vads_order_id] => 2337
+    [vads_page_action] => PAYMENT
+    [vads_payment_cards] => 
+    [vads_payment_config] => SINGLE
+    [vads_return_mode] => POST
+    [vads_ship_to_city] => 
+    [vads_ship_to_country] => PE
+    [vads_ship_to_first_name] => Kevin
+    [vads_ship_to_last_name] => Vega
+    [vads_ship_to_state] => LMA
+    [vads_ship_to_street] => Pedro Ruiz 827
+    [vads_ship_to_street2] => 
+    [vads_ship_to_zip] => LIM_BRENA
+    [vads_shipping_amount] => 2900
+    [vads_site_id] => 58496311
+    [vads_totalamount_vat] => 0
+    [vads_trans_date] => 20261026140028
+    [vads_trans_id] => 504284
+    [vads_url_return] => https://nunatura.com/?wc-api=WC_Gateway_Micuentaweb
+    [vads_validation_mode] => 
+    [vads_version] => V2
+    [vads_ext_info_order_key] => wc_order_EaZrmQFchNfQA
+    [vads_ext_info_blog_id] => 0
+    [vads_ext_info_session_id] => 
+)
+ CONTEXT: {"_legacy":true}
+2026-10-26T14:00:37+00:00 NOTICE Generating payment form for order #2337. CONTEXT: {"_legacy":true}
+2026-10-26T14:00:37+00:00 NOTICE Data to be sent to payment gateway : Array
+(
+    [signature] => RxaYICa0+74NG+IEBHKDfdRIJqWbhX+pekbhng1mXl8=
+    [vads_action_mode] => INTERACTIVE
+    [vads_amount] => 3000
+    [vads_capture_delay] => 
+    [vads_contrib] => WooCommerce_2.x-10.x_1.18.3/7.1.3_11.0.1/8.2.34
+    [vads_ctx_mode] => PRODUCTION
+    [vads_currency] => 604
+    [vads_cust_address] => Pedro Ruiz 827
+    [vads_cust_city] => 
+    [vads_cust_country] => PE
+    [vads_cust_email] => kc2693@gmail.com
+    [vads_cust_first_name] => Kevin
+    [vads_cust_id] => 0
+    [vads_cust_last_name] => Vega
+    [vads_cust_phone] => +51952839030
+    [vads_cust_state] => LMA
+    [vads_cust_status] => 
+    [vads_cust_zip] => LIM_BRENA
+    [vads_cust_national_id] => 
+    [vads_cust_address_number] => 
+    [vads_cust_district] => 
+    [vads_language] => es
+    [vads_order_id] => 2337
+    [vads_page_action] => PAYMENT
+    [vads_payment_cards] => 
+    [vads_payment_config] => SINGLE
+    [vads_return_mode] => POST
+    [vads_ship_to_city] => 
+    [vads_ship_to_country] => PE
+    [vads_ship_to_first_name] => Kevin
+    [vads_ship_to_last_name] => Vega
+    [vads_ship_to_state] => LMA
+    [vads_ship_to_street] => Pedro Ruiz 827
+    [vads_ship_to_street2] => 
+    [vads_ship_to_zip] => LIM_BRENA
+    [vads_shipping_amount] => 2900
+    [vads_site_id] => 58496311
+    [vads_totalamount_vat] => 0
+    [vads_trans_date] => 20261026140036
+    [vads_trans_id] => 504365
+    [vads_url_return] => https://nunatura.com/?wc-api=WC_Gateway_Micuentaweb
+    [vads_validation_mode] => 
+    [vads_version] => V2
+    [vads_ext_info_order_key] => wc_order_EaZrmQFchNfQA
+    [vads_ext_info_blog_id] => 0
+    [vads_ext_info_session_id] => 
+)
+ CONTEXT: {"_legacy":true}
+2026-10-26T14:02:53+00:00 NOTICE Received payment request for order #2337 during checkout processing. CONTEXT: {"_legacy":true}
+2026-10-26T14:02:59+00:00 NOTICE Generating payment form for order #2337. CONTEXT: {"_legacy":true}
+2026-10-26T14:02:59+00:00 NOTICE Data to be sent to payment gateway : Array
+(
+    [signature] => ri+k2XCR/6k5tOB41+QzSurOYq/2bKg/x/CQzUYEwpA=
+    [vads_action_mode] => INTERACTIVE
+    [vads_amount] => 3000
+    [vads_capture_delay] => 
+    [vads_contrib] => WooCommerce_2.x-10.x_1.18.3/7.1.3_11.0.1/8.2.34
+    [vads_ctx_mode] => PRODUCTION
+    [vads_currency] => 604
+    [vads_cust_address] => Pedro Ruiz 827
+    [vads_cust_city] => 
+    [vads_cust_country] => PE
+    [vads_cust_email] => kc2693@gmail.com
+    [vads_cust_first_name] => Kevin
+    [vads_cust_id] => 0
+    [vads_cust_last_name] => Vega
+    [vads_cust_phone] => +51952839030
+    [vads_cust_state] => LMA
+    [vads_cust_status] => 
+    [vads_cust_zip] => LIM_BRENA
+    [vads_cust_national_id] => 
+    [vads_cust_address_number] => 
+    [vads_cust_district] => 
+    [vads_language] => es
+    [vads_order_id] => 2337
+    [vads_page_action] => PAYMENT
+    [vads_payment_cards] => 
+    [vads_payment_config] => SINGLE
+    [vads_return_mode] => POST
+    [vads_ship_to_city] => 
+    [vads_ship_to_country] => PE
+    [vads_ship_to_first_name] => Kevin
+    [vads_ship_to_last_name] => Vega
+    [vads_ship_to_state] => LMA
+    [vads_ship_to_street] => Pedro Ruiz 827
+    [vads_ship_to_street2] => 
+    [vads_ship_to_zip] => LIM_BRENA
+    [vads_shipping_amount] => 2900
+    [vads_site_id] => 58496311
+    [vads_totalamount_vat] => 0
+    [vads_trans_date] => 20261026140258
+    [vads_trans_id] => 505783
+    [vads_url_return] => https://nunatura.com/?wc-api=WC_Gateway_Micuentaweb
+    [vads_validation_mode] => 
+    [vads_version] => V2
+    [vads_ext_info_order_key] => wc_order_EaZrmQFchNfQA
+    [vads_ext_info_blog_id] => 0
+    [vads_ext_info_session_id] => 
+)
+ CONTEXT: {"_legacy":true}
+2026-10-26T14:03:03+00:00 NOTICE Generating payment form for order #2337. CONTEXT: {"_legacy":true}
+2026-10-26T14:03:03+00:00 NOTICE Data to be sent to payment gateway : Array
+(
+    [signature] => eHR/qScmLit5BeowbxFBIFsZNmGzG7ZfWBuZ5a2bVD8=
+    [vads_action_mode] => INTERACTIVE
+    [vads_amount] => 3000
+    [vads_capture_delay] => 
+    [vads_contrib] => WooCommerce_2.x-10.x_1.18.3/7.1.3_11.0.1/8.2.34
+    [vads_ctx_mode] => PRODUCTION
+    [vads_currency] => 604
+    [vads_cust_address] => Pedro Ruiz 827
+    [vads_cust_city] => 
+    [vads_cust_country] => PE
+    [vads_cust_email] => kc2693@gmail.com
+    [vads_cust_first_name] => Kevin
+    [vads_cust_id] => 0
+    [vads_cust_last_name] => Vega
+    [vads_cust_phone] => +51952839030
+    [vads_cust_state] => LMA
+    [vads_cust_status] => 
+    [vads_cust_zip] => LIM_BRENA
+    [vads_cust_national_id] => 
+    [vads_cust_address_number] => 
+    [vads_cust_district] => 
+    [vads_language] => es
+    [vads_order_id] => 2337
+    [vads_page_action] => PAYMENT
+    [vads_payment_cards] => 
+    [vads_payment_config] => SINGLE
+    [vads_return_mode] => POST
+    [vads_ship_to_city] => 
+    [vads_ship_to_country] => PE
+    [vads_ship_to_first_name] => Kevin
+    [vads_ship_to_last_name] => Vega
+    [vads_ship_to_state] => LMA
+    [vads_ship_to_street] => Pedro Ruiz 827
+    [vads_ship_to_street2] => 
+    [vads_ship_to_zip] => LIM_BRENA
+    [vads_shipping_amount] => 2900
+    [vads_site_id] => 58496311
+    [vads_totalamount_vat] => 0
+    [vads_trans_date] => 20261026140302
+    [vads_trans_id] => 505822
+    [vads_url_return] => https://nunatura.com/?wc-api=WC_Gateway_Micuentaweb
+    [vads_validation_mode] => 
+    [vads_version] => V2
+    [vads_ext_info_order_key] => wc_order_EaZrmQFchNfQA
+    [vads_ext_info_blog_id] => 0
+    [vads_ext_info_session_id] => 
+)
+ CONTEXT: {"_legacy":true}
+2026-10-26T21:36:06+00:00 NOTICE Received payment request for order #2339 during checkout processing. CONTEXT: {"_legacy":true}
+2026-10-26T21:36:09+00:00 NOTICE Generating payment form for order #2339. CONTEXT: {"_legacy":true}
+2026-10-26T21:36:09+00:00 NOTICE Data to be sent to payment gateway : Array
+(
+    [signature] => yr86bkIgI71/ZFFuHshs1QKZ78NSXgVzvp3k0zOnIyg=
+    [vads_action_mode] => INTERACTIVE
+    [vads_amount] => 110
+    [vads_capture_delay] => 
+    [vads_contrib] => WooCommerce_2.x-10.x_1.18.3/7.1.3_11.0.1/8.2.34
+    [vads_ctx_mode] => PRODUCTION
+    [vads_currency] => 604
+    [vads_cust_address] => Carmen de la legua 225
+    [vads_cust_city] => 
+    [vads_cust_country] => PE
+    [vads_cust_email] => marketing01@nunatura.com
+    [vads_cust_first_name] => Kevin
+    [vads_cust_id] => 7
+    [vads_cust_last_name] => Vega
+    [vads_cust_phone] => +51952839030
+    [vads_cust_state] => LMA
+    [vads_cust_status] => 
+    [vads_cust_zip] => LIM_ATE
+    [vads_cust_national_id] => 
+    [vads_cust_address_number] => 
+    [vads_cust_district] => 
+    [vads_language] => es
+    [vads_order_id] => 2339
+    [vads_page_action] => PAYMENT
+    [vads_payment_cards] => 
+    [vads_payment_config] => SINGLE
+    [vads_return_mode] => POST
+    [vads_ship_to_city] => 
+    [vads_ship_to_country] => PE
+    [vads_ship_to_first_name] => Kevin
+    [vads_ship_to_last_name] => Vega
+    [vads_ship_to_state] => LMA
+    [vads_ship_to_street] => Carmen de la legua 225
+    [vads_ship_to_street2] => 
+    [vads_ship_to_zip] => LIM_ATE
+    [vads_shipping_amount] => 30
+    [vads_site_id] => 58496311
+    [vads_totalamount_vat] => 0
+    [vads_trans_date] => 20261026213608
+    [vads_trans_id] => 777680
+    [vads_url_return] => https://nunatura.com/?wc-api=WC_Gateway_Micuentaweb
+    [vads_validation_mode] => 
+    [vads_version] => V2
+    [vads_ext_info_order_key] => wc_order_di7QdyrRNdTR8
+    [vads_ext_info_blog_id] => 0
+    [vads_ext_info_session_id] => eTBW9FbZv5vQDja3u1R4ZbiKrjylnRG4WZMle8FHwlC
+)
+ CONTEXT: {"_legacy":true}
+2026-10-26T21:37:41+00:00 NOTICE Payment successfull, let's complete order #2339. CONTEXT: {"_legacy":true}
+2026-10-26T21:37:42+00:00 NOTICE Payment processed successfully by IPN URL call for order #2339. CONTEXT: {"_legacy":true}
+2026-10-26T21:37:42+00:00 NOTICE IPN URL process end for order #2339 CONTEXT: {"_legacy":true}
+2026-10-26T22:42:43+00:00 NOTICE Form token created successfully for user admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:42:48+00:00 NOTICE Form token created successfully for user admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:45:11+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:45:18+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:46:52+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:46:58+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:00+00:00 NOTICE Form token created successfully for user admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:04+00:00 NOTICE Received payment request for order #2340 during checkout processing. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:05+00:00 NOTICE Generating payment form for order #2340. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:05+00:00 NOTICE Form token created successfully for order #2340. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:18+00:00 NOTICE Received payment request for order #2340 during checkout processing. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:22+00:00 NOTICE Payment successfull, let's complete order #2340. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:23+00:00 NOTICE Payment processed successfully by IPN URL call for order #2340. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:23+00:00 NOTICE IPN URL process end for order #2340 CONTEXT: {"_legacy":true}
+2026-10-26T22:47:29+00:00 NOTICE Order #2340 is already saved. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:29+00:00 NOTICE Payment successful confirmed for order #2340. CONTEXT: {"_legacy":true}
+2026-10-26T22:47:29+00:00 NOTICE Return URL process end for order #2340 CONTEXT: {"_legacy":true}
+2026-10-26T22:49:53+00:00 NOTICE Form token created successfully for user admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:50:00+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:51:13+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:51:20+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:54:48+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T22:54:58+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: admin@nunatura.com. CONTEXT: {"_legacy":true}
+2026-10-26T23:31:36+00:00 NOTICE Form token created successfully for user . CONTEXT: {"_legacy":true}
+2026-10-26T23:31:48+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: . CONTEXT: {"_legacy":true}
+2026-10-26T23:32:05+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: . CONTEXT: {"_legacy":true}
+2026-10-26T23:32:14+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: . CONTEXT: {"_legacy":true}
+2026-10-26T23:33:30+00:00 NOTICE Form token created successfully for user grecia22.laroal@gmail.com. CONTEXT: {"_legacy":true}
+2026-10-26T23:35:39+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: grecia22.laroal@gmail.com. CONTEXT: {"_legacy":true}
+2026-10-26T23:44:56+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: grecia22.laroal@gmail.com. CONTEXT: {"_legacy":true}
+2026-10-26T23:57:13+00:00 NOTICE Form token created successfully for user . CONTEXT: {"_legacy":true}
+2026-10-26T23:57:20+00:00 NOTICE Cart data did not change since last token creation, use last created token for current cart for user: . CONTEXT: {"_legacy":true}

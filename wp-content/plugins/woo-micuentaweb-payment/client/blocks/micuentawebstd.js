@@ -1,0 +1,326 @@
+/**
+ * Copyright © Lyra Network and contributors.
+ * This file is part of Izipay plugin for WooCommerce. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @author    Geoffrey Crofte, Alsacréations (https://www.alsacreations.fr/)
+ * @copyright Lyra Network and contributors
+ * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL v2)
+ */
+
+/**
+ * External dependencies.
+ */
+import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { decodeEntities } from '@wordpress/html-entities';
+import { useEffect } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Internal dependencies.
+ */
+import { getMicuentawebServerData } from './micuentaweb-utils';
+
+const PAYMENT_METHOD_NAME = 'micuentawebstd';
+var micuentaweb_data = getMicuentawebServerData(PAYMENT_METHOD_NAME);
+
+var smartbuttonMethod = '';
+var smartbuttonAll = false;
+var hideSmart = micuentaweb_data?.hide_smartbutton && (micuentaweb_data?.hide_smartbutton === 'true');
+var hideButton = false;
+
+var savedData = false;
+var newData = null;
+
+const Content = (props) => {
+    const { eventRegistration } = props || {};
+    const { onCheckoutSuccess } = eventRegistration || {};
+
+    // Display embedded payment fields once the payment method content is mounted.
+    useEffect(() => {
+        displayFields();
+    }, []);
+
+    useEffect(() => {
+        const unsubscribes = [];
+
+        if (typeof onCheckoutSuccess === 'function') {
+            // Fallback for older checkout blocks integrations.
+            let unsubscribe = onCheckoutSuccess(async (payload) => {
+                await processPayment(payload);
+            });
+
+            if (typeof unsubscribe === 'function') {
+                unsubscribes.push(unsubscribe);
+            }
+        }
+
+        return () => {
+            unsubscribes.forEach((unsubscribe) => unsubscribe());
+        };
+    }, [onCheckoutSuccess]);
+
+    if (micuentaweb_data?.payment_fields) {
+        var fields = <div dangerouslySetInnerHTML={{__html: micuentaweb_data?.payment_fields}} />;
+
+        return (
+            <div>
+                { fields }
+            </div>
+        );
+    } else {
+        return decodeEntities(micuentaweb_data?.description);
+    }
+};
+
+var Label = () => {
+    const styles = {
+        divWidth: {
+            width: '95%'
+        },
+        imgFloat: {
+            float: 'right'
+        }
+    }
+
+    return (
+        <div style={ styles.divWidth }>
+            <span>{ micuentaweb_data?.title}</span>
+            <img
+                style={ styles.imgFloat }
+                src={ micuentaweb_data?.logo_url }
+                alt={ micuentaweb_data?.title }
+            />
+        </div>
+    );
+};
+
+registerPaymentMethod({
+    name: PAYMENT_METHOD_NAME,
+    label: <Label />,
+    ariaLabel: 'Micuentaweb payment method',
+    canMakePayment: () => true,
+    content: <Content />,
+    edit: <Content />,
+    supports: {
+        features: micuentaweb_data?.supports ?? [],
+    },
+});
+
+var displayFields = function () {
+    var checkedMethod = jQuery("input[type=radio][name=radio-control-wc-payment-method-options]:checked").val();
+    if (checkedMethod !== PAYMENT_METHOD_NAME) {
+        return;
+    }
+
+    switch (micuentaweb_data?.payment_mode) {
+        case 'SMARTFORM':
+        case 'SMARTFORMEXT':
+        case 'SMARTFORMEXTNOLOGOS':
+            if (micuentaweb_data?.vars) {
+                delete(window.FORM_TOKEN);
+                delete(window.IDENTIFIER_FORM_TOKEN);
+                delete(window.MICUENTAWEB_HIDE_SINGLE_BUTTON);
+
+                eval(micuentaweb_data?.vars);
+
+                hideButton = (window.MICUENTAWEB_HIDE_SINGLE_BUTTON == true);
+
+                KR.onFormReady(() => {
+                    if (hideSmart) {
+                        let element = jQuery(".kr-smart-button");
+                        if (element.length > 0) {
+                            smartbuttonMethod = element.attr("kr-payment-method");
+                            element.hide();
+                        } else {
+                            element = jQuery(".kr-smart-form-modal-button");
+                            if (element.length > 0) {
+                                smartbuttonMethod = "all";
+                                element.hide();
+                            }
+                        }
+                    }
+                });
+
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach((mutation) => {
+                        if (mutation.addedNodes.length > 0) {
+                            mutation.addedNodes.forEach((node) => {
+                                if (node.className == "wc-block-components-totals-item__value") {
+                                    refreshTempToken();
+                                }
+                            })
+                        }
+                    });
+                });
+
+                var target = document.querySelector('.wc-block-components-totals-footer-item');
+                if (target) {
+                    observer.observe(target, {characterData: true, childList: true, subtree: true});
+                }
+            }
+
+            break; 
+
+         default:
+            break;
+    }
+
+    micuentawebUpdatePaymentBlock(true, PAYMENT_METHOD_NAME);
+};
+
+var processPayment = async function (payload) {
+    if (! jQuery("#radio-control-wc-payment-method-options-" + PAYMENT_METHOD_NAME).is(":checked")) {
+        return true;
+    }
+
+    // In case of form validation error, let WooCommerce deal with it.
+    if (jQuery('div.wc-block-components-validation-error')[0]) {
+        return true;
+    }
+
+    jQuery('.kr-form-error').html('');
+
+    document.cookie = PAYMENT_METHOD_NAME + '_force_redir=; Max-Age=0; path=/; domain=' + location.host;
+    document.cookie = 'micuentaweb_use_identifier=; Max-Age=0; path=/; domain=' + location.host;
+
+    if (jQuery("#micuentaweb_use_identifier")) {
+        let use_identifier = jQuery("#micuentaweb_use_identifier").val();
+        document.cookie = 'micuentaweb_use_identifier=' + use_identifier + '; path=/';
+    }
+
+    switch (micuentaweb_data?.payment_mode) {
+        case 'MERCHANT':
+            micuentawebstd_get_card();
+            break;
+
+        case 'SMARTFORM':
+        case 'SMARTFORMEXT':
+        case 'SMARTFORMEXTNOLOGOS':
+            if (typeof window.FORM_TOKEN == 'undefined') {
+                document.cookie = PAYMENT_METHOD_NAME + '_force_redir="true"; path=/; domain=' + location.host;
+                break;
+            }
+
+            var useIdentifier = jQuery("#micuentaweb_use_identifier").length && jQuery("#micuentaweb_use_identifier").val() === "true";
+            var popin = (jQuery(".kr-smart-form-modal-button").length > 0) || (jQuery(".kr-popin-button").length > 0);
+
+            var formToken = getFormToken(payload);
+            if (! formToken) {
+                return {
+                    type: 'error',
+                    message: __('Unable to initialise the payment form.', 'woo-micuentaweb-payment')
+                };
+            }
+
+            var v = await KR.setFormConfig({
+                formToken: formToken
+            })
+
+            KR = v.KR;
+
+            if (! useIdentifier && ! popin && ! hideButton && ! hideSmart) {
+                return validateKR(KR);
+            } else {
+                submitForm(KR, popin, useIdentifier);
+                break;
+            }
+
+        default:
+            break;
+    }
+};
+
+var getFormToken = function (payload) {
+    var formToken = payload?.processingResponse?.paymentDetails?.formToken ?? payload?.paymentDetails?.formToken ?? null;
+    if (! formToken) {
+        return null;
+    }
+
+    return formToken;
+};
+
+var submitForm = function (KR, popin = false, useIdentifier = false) {
+    jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+        newData = options.data;
+    });
+
+    var registerCard = jQuery('input[name="kr-do-register"]').is(':checked');
+
+    if (savedData && (newData === savedData)) {
+        // Data in checkout page has not changed, no need to calculate token again.
+        submitKR(KR, popin);
+    } else {
+        if (jQuery('div.wc-block-components-validation-error')[0]) {
+            return true;
+        }
+
+        return submitKR(KR, popin);
+    }
+};
+
+var submitKR = function (KR, popin) {
+    if (jQuery('div.wc-block-components-validation-error')[0]) {
+        return true;
+    }
+
+    if (hideButton) {
+        let element = jQuery('.kr-smart-button');
+
+        if (element.length > 0) {
+             smartbuttonMethod = element.attr('kr-payment-method');
+        } else {
+            element = jQuery('.kr-smart-form-modal-button');
+
+            if (element.length > 0) {
+                smartbuttonAll = true;
+            }
+        }
+    }
+
+    if (popin || smartbuttonAll) {
+        KR.openPopin();
+    } else if (hideButton) {
+        KR.openSelectedPaymentMethod();
+    } else if (smartbuttonMethod.length > 0) {
+        KR.openPaymentMethod(smartbuttonMethod);
+    } else {
+        jQuery('#micuentaweb_rest_processing').css('display', 'block');
+        jQuery('ul.' + PAYMENT_METHOD_NAME + '-view-top li.block').hide();
+        jQuery('ul.' + PAYMENT_METHOD_NAME + '-view-bottom').hide();
+
+        KR.submit();
+    }
+
+    return false;
+};
+
+var validateKR = function(KR) {
+    KR.validateForm().then(function(v) {
+        submitForm(v.KR);
+    }).catch(function(v) {
+        // Display error message.
+        var result = v.result;
+        return result.doOnError();
+    });
+
+    return false;
+};
+
+var refreshTempToken = function () {
+    if (jQuery("#radio-control-wc-payment-method-options-" + PAYMENT_METHOD_NAME).is(":checked")) {
+        jQuery.ajax({
+            method: 'POST',
+            url: micuentaweb_data?.temporary_token_url,
+            success: function(data) {
+                var parsed = JSON.parse(data);
+                KR.setFormConfig({
+                    language: window.MICUENTAWEB_LANGUAGE,
+                    formToken: parsed.formToken
+                }).then(function(v) {
+                    KR = v.KR;
+                });
+            }
+        });
+    }
+};

@@ -1,0 +1,1097 @@
+<?php //phpcs:ignore WordPress.Files.FileName.InvalidClassFileName, WPShield_Standard.Security.DisallowBrandAndImproperPluginName.ImproperPluginName, WordPress.Files.FileName.NotHyphenatedLowercase -- Cannot change the main settings filename
+/**
+ * Main plugin settings file for miniOrange 2-factor Authentication.
+ *
+ * @package miniOrange 2FA
+ */
+
+/**
+ * Plugin Name: miniOrange 2FA – Two Factor Authentication for WordPress (OTP, SMS, Email, Google Authenticator)
+ * Plugin URI: https://miniorange.com
+ * Description: This TFA plugin provides various two-factor authentication methods as an additional layer of security after the default WordPress login. Free plan: unlimited users with Google Authenticator, Email OTP, Security Questions (KBA), and Passkey; premium unlocks SMS/WhatsApp OTP, Authy/LastPass/Microsoft Authenticator, and advanced policies.
+ * Version: 6.4.0
+ * Author: miniOrange
+ * Author URI: https://miniorange.com
+ * Text Domain: miniorange-2-factor-authentication
+ * License: Expat
+ * License URI: https://plugins.miniorange.com/mit-license
+ */
+namespace TwoFA;
+
+use TwoFA\Helper\MoWpnsConstants;
+use TwoFA\Helper\MoWpnsUtility;
+use TwoFA\Helper\MoWpnsMessages;
+use TwoFA\Helper\Mo2f_Common_Helper;
+use TwoFA\Helper\MocURL;
+use TwoFA\Handler\Twofa\MO2f_Utility;
+use TwoFA\Handler\Twofa\Miniorange_Authentication;
+use TwoFA\Views\Mo2f_Setup_Wizard;
+use TwoFA\Helper\Mo2f_MenuItems;
+use TwoFA\Handler\Mo2f_2fa_Settings_Handler;
+use TwoFA\Traits\Instance;
+use TwoFA\Handler\RegistrationHandler;
+use TwoFA\Mo2f_Classloader;
+use TwoFA\Helper\Miniorange_Security_Notification;
+use TwoFA\Database\Mo2fDB;
+use TwoFA\Database\MoWpnsDB;
+use TwoFA\Mo2fInit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'mo2f-db-options.php';
+require __DIR__ . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'new-release-email.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'traits' . DIRECTORY_SEPARATOR . 'class-instance.php';
+
+define( 'MO_HOST_NAME', 'https://login.xecurify.com' );
+define( 'MO2F_VERSION', '6.4.0' );
+define( 'MO2F_PLUGIN_URL', ( plugin_dir_url( __FILE__ ) ) );
+define( 'MO2F_TEST_MODE', false );
+define( 'MO2F_IS_ONPREM', get_option( 'is_onprem', 1 ) );
+define( 'MO2F_PREMIUM_PLAN', false );
+define( 'DEFAULT_GOOGLE_APPNAME', preg_replace( '#^https?://#i', '', home_url() ) );
+
+global $mo2f_main_dir, $mo2f_image_path;
+$mo2f_main_dir   = plugin_dir_url( __FILE__ );
+$mo2f_image_path = plugin_dir_url( __FILE__ );
+
+if ( ! class_exists( 'Miniorange_TwoFactor' ) ) {
+	/**
+	 * Includes all the hooks and actions in the main plugin file.
+	 */
+	class Miniorange_TwoFactor {
+
+		use Instance;
+
+		/**
+		 * Constructor.
+		 */
+		public function __construct() {
+			add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'mo2f_add_plugin_action_link' ), 10, 1 );
+			register_deactivation_hook( __FILE__, array( $this, 'mo_wpns_deactivate' ) );
+			register_activation_hook( __FILE__, array( $this, 'mo_wpns_activate' ) );
+			add_action( 'admin_menu', array( $this, 'mo_wpns_widget_menu' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'mo_wpns_settings_style' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'mo_wpns_settings_script' ) );
+			add_action( 'admin_init', array( $this, 'miniorange_reset_save_settings' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_mail_send' ) );
+			add_filter( 'manage_users_columns', array( $this, 'mo2f_mapped_email_column' ) );
+			add_action( 'manage_users_custom_column', array( $this, 'mo2f_mapped_email_column_content' ), 10, 3 );
+			add_action( 'admin_notices', array( $this, 'mo2f_notices' ) );
+			$actions = add_filter( 'user_row_actions', array( $this, 'miniorange_reset_users' ), 10, 2 );
+			add_action( 'admin_footer', array( $this, 'feedback_request' ) );
+			add_action( 'init', array( $this, 'mo2fa_maybe_load_textdomain' ) );
+			if ( ! defined( 'DISALLOW_FILE_EDIT' ) && get_option( 'mo2f_disable_file_editing' ) ) {
+				define( 'DISALLOW_FILE_EDIT', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress core constant.
+			}
+			$notify = new Miniorange_Security_Notification();
+			add_action( 'wp_dashboard_setup', array( $notify, 'my_custom_dashboard_widgets' ) );
+			if ( ! apply_filters( 'mo2f_is_lv_needed', false ) ) {
+				add_action( 'plugins_loaded', array( $this, 'mo2f_add_wizard_actions' ), 1 );
+			}
+			$reg_handler_obj = new RegistrationHandler();
+			add_action( 'admin_init', array( $reg_handler_obj, 'mo2f_wp_verification' ) );
+			add_action( 'elementor/init', array( $this, 'mo2fa_login_elementor_note' ) );
+			add_shortcode( 'mo2f_enable_register', array( $reg_handler_obj, 'mo2f_wp_verification' ) );
+			add_action( 'user_profile_update_errors', array( $this, 'mo2f_user_profile_errors' ), 10, 3 );
+			add_action( 'admin_init', array( $this, 'mo2f_migrate_whitelisted_ips_table' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_migrate_network_blocked_ips_table' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_migrate_user_details' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_drop_wpns_attack_logs_and_network_email_sent_audit' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_handle_first_setup_nudge_dismiss' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_handle_user_limit_notice_dismiss' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_remove_telegram_otp_method' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_reset_premium_only_2fa_methods' ) );
+			add_action( 'admin_init', array( $this, 'mo2f_force_visual_editor_for_email_templates' ) );
+			add_action( 'init', array( $this, 'mo2f_maybe_schedule_2fa_reminder_cron' ) );
+			add_action( 'mo2f_daily_2fa_reminder_check', array( $this, 'mo2f_send_2fa_reminder_emails' ) );
+		}
+
+		/**
+		 * Self-healing cron scheduler for the 2FA enrollment reminder email --
+		 * runs on init rather than relying only on the activation hook, so it
+		 * also self-schedules for sites that were already active before this
+		 * feature shipped (this hook is also cleared in mo_wpns_deactivate()).
+		 *
+		 * @return void
+		 */
+		public function mo2f_maybe_schedule_2fa_reminder_cron() {
+			if ( ! wp_next_scheduled( 'mo2f_daily_2fa_reminder_check' ) ) {
+				wp_schedule_event( time(), 'daily', 'mo2f_daily_2fa_reminder_check' );
+			}
+		}
+
+		/**
+		 * Sends a reminder email, at most once every 7 days per user, to users
+		 * who are required to have 2FA (per Mo2f_Main_Handler::mo2f_check_if_twofa_is_enabled(),
+		 * which already respects role-based enforcement and grace period
+		 * settings) but haven't configured a method yet. Off by default -- see
+		 * the mo2f_enable_2fa_reminder_emails site option.
+		 *
+		 * @return void
+		 */
+		public function mo2f_send_2fa_reminder_emails() {
+			if ( ! get_site_option( 'mo2f_enable_2fa_reminder_emails' ) ) {
+				return;
+			}
+			global $mo2fdb_queries;
+			$main_handler = new \TwoFA\Handler\Mo2f_Main_Handler();
+			foreach ( get_users() as $mo2f_reminder_user ) {
+				if ( ! is_email( $mo2f_reminder_user->user_email ) ) {
+					continue;
+				}
+				if ( ! $main_handler->mo2f_check_if_twofa_is_enabled( $mo2f_reminder_user ) ) {
+					continue; // 2FA isn't required for this user -- don't nag them.
+				}
+				$configured_method    = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_configured_2FA_method', $mo2f_reminder_user->ID );
+				$registration_status  = $mo2fdb_queries->mo2f_get_user_detail( 'mo_2factor_user_registration_status', $mo2f_reminder_user->ID );
+				if ( ! empty( $configured_method ) && MoWpnsConstants::MO_2_FACTOR_PLUGIN_SETTINGS === $registration_status ) {
+					continue; // already configured.
+				}
+				$last_reminded = (int) get_user_meta( $mo2f_reminder_user->ID, 'mo2f_last_2fa_reminder_sent', true );
+				if ( $last_reminded && ( time() - $last_reminded ) < 7 * DAY_IN_SECONDS ) {
+					continue; // reminded within the last week, don't spam.
+				}
+				$subject  = sprintf(
+					/* Translators: %s: site name. */
+					__( 'Action required: set up two-factor authentication on %s', 'miniorange-2-factor-authentication' ),
+					get_bloginfo( 'name' )
+				);
+				$message  = '<p>' . sprintf(
+					/* Translators: %s: site name. */
+					esc_html__( "Your account on %s requires two-factor authentication, but you haven't set it up yet.", 'miniorange-2-factor-authentication' ),
+					esc_html( get_bloginfo( 'name' ) )
+				) . '</p>';
+				$message .= '<p><a href="' . esc_url( admin_url( 'profile.php' ) ) . '">' . esc_html__( 'Set up two-factor authentication now', 'miniorange-2-factor-authentication' ) . '</a></p>';
+				MocURL::mo2f_send_cloud_email( $mo2f_reminder_user->user_email, $subject, $message );
+				update_user_meta( $mo2f_reminder_user->ID, 'mo2f_last_2fa_reminder_sent', time() );
+			}
+		}
+
+		/**
+		 * Shows error messages in the user profile
+		 *
+		 * @param object  $errors error object.
+		 * @param boolean $update boolean variable update.
+		 * @param object  $userdata user data object.
+		 * @return void
+		 */
+		public function mo2f_user_profile_errors( $errors, $update, $userdata ) {
+			global $mo2fdb_queries;
+			$nonce = isset( $_POST['mo2f_enable_user_profile_2fa_nonce'] ) ? sanitize_key( wp_unslash( $_POST['mo2f_enable_user_profile_2fa_nonce'] ) ) : null;
+			if ( wp_verify_nonce( $nonce, 'mo-two-factor-ajax-nonce' ) ) {
+				$is_userprofile_enabled = isset( $_POST['mo2f_enable_userprofile_2fa'] ) ? sanitize_key( wp_unslash( $_POST['mo2f_enable_userprofile_2fa'] ) ) : false;
+				if ( $is_userprofile_enabled ) {
+					$twofa_configuration_status = $mo2fdb_queries->mo2f_get_user_detail( 'mo_2factor_user_registration_status', $userdata->ID );
+					if ( MoWpnsConstants::MO_2_FACTOR_PLUGIN_SETTINGS === $twofa_configuration_status ) {
+						$existing_twofa_method = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_configured_2FA_method', $userdata->ID );
+						$selected_method       = isset( $_POST['method'] ) ? sanitize_text_field( wp_unslash( $_POST['method'] ) ) : '';
+						if ( $existing_twofa_method === $selected_method ) {
+							return;
+						}
+					}
+					$error_message = get_user_meta( $userdata->ID, 'mo2f_userprofile_error_message', true );
+					delete_user_meta( $userdata->ID, 'mo2f_userprofile_error_message' );
+					if ( $error_message ) {
+						$errors->add( 'user_profile_error', $error_message );
+					}
+				}
+			}
+		}
+
+		/**
+		 * Includes scripts and localize parameters for elementor login form.
+		 *
+		 * @return void
+		 */
+		public function mo2fa_login_elementor_note() {
+			global $mo2f_main_dir;
+
+			if ( ! is_user_logged_in() ) {
+				wp_enqueue_script( 'jquery' );
+				wp_enqueue_script( 'mo2fa_elementor_script', $mo2f_main_dir . 'includes/js/mo2fa_elementor.min.js', array(), MO2F_VERSION, false );
+
+				wp_localize_script(
+					'mo2fa_elementor_script',
+					'my_ajax_object',
+					array(
+						'ajax_url'          => get_site_url() . '/login/',
+						'nonce'             => wp_create_nonce( 'miniorange-2-factor-login-nonce' ),
+						'mo2f_login_option' => MoWpnsUtility::get_mo2f_db_option( 'mo2f_login_option', 'get_option' ),
+						'mo2f_enable_login_with_2nd_factor' => get_option( 'mo2f_enable_login_with_2nd_factor' ),
+					)
+				);
+			}
+		}
+		/**
+		 * As on plugins.php page not in the plugin.
+		 *
+		 * @return void
+		 */
+		public function feedback_request() {
+			if ( isset( $_SERVER['PHP_SELF'] ) && 'plugins.php' !== basename( esc_url_raw( wp_unslash( $_SERVER['PHP_SELF'] ) ) ) ) {
+				return;
+			}
+			global $mo2f_dir_name;
+
+			$email = get_site_option( 'mo2f_email' );
+			if ( empty( $email ) ) {
+				$user  = wp_get_current_user();
+				$email = $user->user_email;
+			}
+
+			wp_enqueue_style( 'wp-pointer' );
+			wp_enqueue_script( 'wp-pointer' );
+			wp_enqueue_script( 'utils' );
+			wp_enqueue_style( 'mo2f-feedback-form-style', plugins_url( 'includes/css/mo2f-feedback-form.min.css', __FILE__ ), array(), MO2F_VERSION );
+
+			include $mo2f_dir_name . 'views' . DIRECTORY_SEPARATOR . 'feedback-form.php';
+		}
+
+		/**
+		 * Load bundled translations if WordPress has not already done so.
+		 *
+		 * @return void
+		 */
+		public function mo2fa_maybe_load_textdomain() {
+			if ( is_textdomain_loaded( 'miniorange-2-factor-authentication' ) ) {
+				return;
+			}
+
+			$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+			$locale = apply_filters( 'plugin_locale', $locale, 'miniorange-2-factor-authentication' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core hook.
+
+			$mofile = plugin_dir_path( __FILE__ ) . 'languages/miniorange-2-factor-authentication-' . $locale . '.mo';
+
+			if ( is_readable( $mofile ) ) {
+				load_textdomain( 'miniorange-2-factor-authentication', $mofile );
+			}
+		}
+		/**
+		 * Including setup wiard actions.
+		 *
+		 * @return void
+		 */
+		public function mo2f_add_wizard_actions() {
+			if ( file_exists( __DIR__ . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'class-mo2f-setup-wizard.php' ) ) {
+				$object = new Mo2f_Setup_Wizard();
+				if ( function_exists( 'wp_get_current_user' ) && current_user_can( 'manage_options' ) ) {
+					add_action( 'admin_init', array( $object, 'mo2f_setup_page' ), 11 );
+				}
+			}
+		}
+
+		/**
+		 * Persist dismiss action for first-setup nudge.
+		 *
+		 * @return void
+		 */
+		public function mo2f_handle_first_setup_nudge_dismiss() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			$should_dismiss = isset( $_GET['mo2f_dismiss_first_setup_nudge'] ) ? sanitize_text_field( wp_unslash( $_GET['mo2f_dismiss_first_setup_nudge'] ) ) : '';
+			if ( '1' !== $should_dismiss ) {
+				return;
+			}
+			$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+			if ( ! wp_verify_nonce( $nonce, 'mo2f-dismiss-first-setup-nudge' ) ) {
+				return;
+			}
+			update_site_option( 'mo2f_first_setup_nudge_dismissed_at', time() );
+			wp_safe_redirect( remove_query_arg( array( 'mo2f_dismiss_first_setup_nudge', '_wpnonce' ) ) );
+			exit;
+		}
+
+		/**
+		 * Persist dismiss action for free-plan seat limit admin notice.
+		 *
+		 * @return void
+		 */
+		public function mo2f_handle_user_limit_notice_dismiss() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			$should_dismiss = isset( $_GET['mo2f_dismiss_user_limit_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['mo2f_dismiss_user_limit_notice'] ) ) : '';
+			if ( '1' !== $should_dismiss ) {
+				return;
+			}
+			$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+			if ( ! wp_verify_nonce( $nonce, 'mo2f-dismiss-user-limit-notice' ) ) {
+				return;
+			}
+			update_site_option( 'mo2f_user_limit_admin_notice_dismissed', 1 );
+			wp_safe_redirect( remove_query_arg( array( 'mo2f_dismiss_user_limit_notice', '_wpnonce' ) ) );
+			exit;
+		}
+
+		/**
+		 * Add notices to admin dashboard.
+		 *
+		 * @return void
+		 */
+		public function mo2f_notices() {
+			$one_day      = 60 * 60 * 24;
+			$dismiss_time = get_site_option( 'notice_dismiss_time' );
+
+			$dismiss_time = ( time() - $dismiss_time ) / $one_day;
+			$dismiss_time = (int) $dismiss_time;
+
+			// setting variables for low SMS/email notification.
+			global $mo2fdb_queries;
+			$user_object                  = wp_get_current_user();
+			$mo2f_configured_2_f_a_method = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_configured_2FA_method', $user_object->ID );
+			$one_day                      = 60 * 60 * 24;
+			$day_sms                      = ( time() - get_site_option( 'mo2f_wpns_sms_dismiss' ) ) / $one_day;
+			$day_sms                      = floor( $day_sms );
+			$day_email                    = ( time() - get_site_option( 'mo2f_wpns_email_dismiss' ) ) / $one_day;
+			$day_email                    = floor( $day_email );
+
+			$count = $mo2fdb_queries->mo2f_get_specific_method_users_count( MoWpnsConstants::OTP_OVER_SMS );
+			if ( ! apply_filters( 'mo2f_is_lv_needed', false ) && MoWpnsConstants::OTP_OVER_EMAIL === $mo2f_configured_2_f_a_method && ( $day_email >= 1 ) && ! get_site_option( 'mo2f_wpns_donot_show_low_email_notice' ) && ( get_site_option( 'cmVtYWluaW5nT1RQ' ) <= 5 ) ) {
+				echo wp_kses_post( MoWpnsMessages::mo2f_get_message( MoWpnsMessages::LOW_EMAIL_TRANSACTIONS ) );
+			}
+			if ( ! get_site_option( 'mo2f_wpns_donot_show_low_sms_notice' ) && ( get_site_option( 'cmVtYWluaW5nT1RQVHJhbnNhY3Rpb25z' ) <= 4 ) && ( $day_sms >= 1 ) && 0 !== $count ) {
+				echo wp_kses_post( MoWpnsMessages::mo2f_get_message( MoWpnsMessages::LOW_SMS_TRANSACTIONS ) );
+			}
+
+			if ( ! current_user_can( 'manage_options' ) || apply_filters( 'mo2f_is_lv_needed', false ) ) {
+				return;
+			}
+
+			$configured_users_count = method_exists( $mo2fdb_queries, 'mo2f_get_configured_2fa_user_count' ) ? $mo2fdb_queries->mo2f_get_configured_2fa_user_count() : 0;
+
+			if ( ! MoWpnsMessages::mo2f_is_free_plan_seat_limit_reached() && get_site_option( 'mo2f_user_limit_admin_notice_dismissed' ) ) {
+				delete_site_option( 'mo2f_user_limit_admin_notice_dismissed' );
+			}
+
+			if ( MoWpnsMessages::mo2f_is_free_plan_seat_limit_reached() && ! get_site_option( 'mo2f_user_limit_admin_notice_dismissed' ) ) {
+				$mo2f_limit_dismiss_url = wp_nonce_url(
+					add_query_arg(
+						array(
+							'mo2f_dismiss_user_limit_notice' => 1,
+						)
+					),
+					'mo2f-dismiss-user-limit-notice'
+				);
+				echo '<div class="notice notice-warning MOWrn"><p style="margin:0.75em 0;">';
+				echo wp_kses_post( MoWpnsMessages::mo2f_user_limit_exceeded_message_html() );
+				echo '</p><p><a class="button" style="color:#2271b1;border-color:#2271b1;" href="' . esc_url( $mo2f_limit_dismiss_url ) . '">' . esc_html__( 'Dismiss', 'miniorange-2-factor-authentication' ) . '</a></p></div>';
+			}
+
+			// Nudge admins to finish initial 2FA setup when nobody has completed setup yet.
+			if ( $configured_users_count > 0 ) {
+				return;
+			}
+			$last_dismissed_at = (int) get_site_option( 'mo2f_first_setup_nudge_dismissed_at', 0 );
+			if ( $last_dismissed_at > 0 && ( time() - $last_dismissed_at ) < 7 * DAY_IN_SECONDS ) {
+				return;
+			}
+
+			$setup_url   = admin_url( 'admin.php?page=mo_2fa_my_account&subpage=setupyour2fa' );
+			$dismiss_url = wp_nonce_url(
+				add_query_arg(
+					array(
+						'mo2f_dismiss_first_setup_nudge' => 1,
+					)
+				),
+				'mo2f-dismiss-first-setup-nudge'
+			);
+
+			echo '<div class="notice notice-info is-dismissible MOWrn">';
+			echo '<p><strong>' . esc_html__( 'Secure your site: complete your first 2FA setup', 'miniorange-2-factor-authentication' ) . '</strong></p>';
+			echo '<p>' . esc_html__( 'No users have completed 2FA setup yet. Configure 2FA now to protect WordPress logins from unauthorized access.', 'miniorange-2-factor-authentication' ) . '</p>';
+			// Inline colors since this notice can render on pages that never load the plugin's CSS.
+			echo '<p><a class="button button-primary" style="background:#2271b1;border-color:#2271b1;color:#fff;" href="' . esc_url( $setup_url ) . '">' . esc_html__( 'Finish 2FA Setup', 'miniorange-2-factor-authentication' ) . '</a> ';
+			echo '<a class="button" style="color:#2271b1;border-color:#2271b1;" href="' . esc_url( $dismiss_url ) . '">' . esc_html__( 'Dismiss for 7 days', 'miniorange-2-factor-authentication' ) . '</a></p>';
+			echo '</div>';
+		}
+
+		/**
+		 * This function hooks into the admin_menu WordPress hook to generate
+		 * WordPress menu items. You define all the options and links you want
+		 * to show to the admin in the WordPress sidebar.
+		 */
+		public function mo_wpns_widget_menu() {
+			Mo2f_MenuItems::instance();
+		}
+
+		/**
+		 * Settings options and calling required functions after register activation hook.
+		 *
+		 * @return void
+		 */
+		public function mo_wpns_activate() {
+			global $mo2f_wpns_db_queries, $mo2fdb_queries;
+			$userid = wp_get_current_user()->ID;
+			$mo2f_wpns_db_queries->mo_plugin_activate();
+			$mo2fdb_queries->mo_plugin_activate();
+			add_option( 'mo2f_is_NC', 1 );
+			add_option( 'mo2f_is_NNC', 1 );
+			add_option( 'mo2f_onprem_admin', $userid );
+			add_option( 'mo2f_handle_migration_status', 1 );
+			add_option( 'mo2f_enable_backup_methods', true );
+			add_option( 'mo2f_enabled_backup_methods', array( 'mo2f_reconfig_link_show', 'mo2f_back_up_codes' ) );
+			add_option( 'mo_wpns_last_scan_time', time() );
+			update_site_option( 'mo2f_mail_notify_new_release', 'on' );
+			add_site_option( 'mo2f_mail_notify', 'on' );
+			update_site_option( 'mo2f_redirect_url_for_users', 'redirect_all' );
+			update_site_option( 'mo2f_graceperiod_action', 'enforce_2fa' );
+			update_site_option( 'mo2f_disable_inline_registration', null );
+			update_site_option( 'mo2f-enforcement-policy', 'mo2f-certain-roles-only' );
+			update_site_option( 'mo2f_mail_notify_new_release', 1 );
+			update_site_option( 'admin_email_address', wp_get_current_user()->user_email );
+			if ( ! get_site_option( 'mo2f_activated_time' ) ) {
+				add_site_option( 'mo2f_activated_time', time() );
+			}
+			$no_of2fa_users = $mo2fdb_queries->mo2f_get_no_of_2fa_users();
+			if ( ! $no_of2fa_users ) {
+				update_site_option( 'mo2f_plugin_redirect', true );
+			}
+			if ( is_multisite() ) {
+				add_site_option( 'mo2fa_superadmin', 1 );
+			}
+			MO2f_Utility::mo2f_debug_file( 'Plugin activated' );
+		}
+
+		/**
+		 * Settings options and calling required functions after register dectivation hook.
+		 *
+		 * @return void
+		 */
+		public function mo_wpns_deactivate() {
+			if ( ! MO2F_IS_ONPREM ) {
+				delete_site_option( 'mo2f_customerKey' );
+				delete_site_option( 'mo2f_api_key' );
+				delete_site_option( 'mo2f_customer_token' );
+			}
+			delete_site_option( 'mo2f_wizard_selected_method' );
+			delete_site_option( 'mo2f_wizard_skipped' );
+			wp_clear_scheduled_hook( 'mo2f_daily_2fa_reminder_check' );
+			$two_fa_settings = new Miniorange_Authentication();
+			$two_fa_settings->mo2f_auth_deactivate();
+		}
+		/**
+		 * Including css files on 2fa dashboard.
+		 *
+		 * @param int $hook - Hook suffix for the current admin page.
+		 * @return void
+		 */
+		public function mo_wpns_settings_style( $hook ) {
+			global $mo2f_dir_name;
+			if ( false !== strpos( $hook, 'page_mo_2fa' ) ) {
+				wp_enqueue_style( 'mo_wpns_main_style', plugins_url( 'includes/css/mo2f-main.min.css', __FILE__ ), array( 'dashicons' ), MO2F_VERSION );
+				wp_enqueue_style( 'mo_2fa_admin_settings_jquery_style', plugins_url( 'includes/css/jquery.ui.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_2fa_admin_settings_phone_style', plugins_url( 'includes/css/phone.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_wpns_admin_settings_style', plugins_url( 'includes/css/style_settings.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_wpns_admin_settings_phone_style', plugins_url( 'includes/css/phone.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_wpns_admin_settings_datatable_style', plugins_url( 'includes/css/jquery.dataTables.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_wpns_button_settings_style', plugins_url( 'includes/css/button_styles.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_wpns_popup_settings_style', plugins_url( 'includes/css/popup.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo_2f_twofa_settings_style', plugins_url( 'includes/css/twofa_style_settings.min.css', __FILE__ ), array(), MO2F_VERSION );
+				if ( file_exists( $mo2f_dir_name . 'includes' . DIRECTORY_SEPARATOR . 'css' . DIRECTORY_SEPARATOR . 'basic-plan.min.css' ) ) {
+					wp_enqueue_style( 'mo_2f_basic_plan_style', plugins_url( 'includes/css/basic-plan.min.css', __FILE__ ), array(), MO2F_VERSION );
+				}
+				if ( file_exists( $mo2f_dir_name . 'includes' . DIRECTORY_SEPARATOR . 'css' . DIRECTORY_SEPARATOR . 'enterprise-plan.min.css' ) ) {
+					wp_enqueue_style( 'mo_2f_enterprise_plan_style', plugins_url( 'includes/css/enterprise-plan.min.css', __FILE__ ), array(), MO2F_VERSION );
+				}
+				if ( file_exists( $mo2f_dir_name . 'includes' . DIRECTORY_SEPARATOR . 'css' . DIRECTORY_SEPARATOR . 'all-inclusive-plan.min.css' ) ) {
+					wp_enqueue_style( 'mo_2f_all_inclusive_plan_style', plugins_url( 'includes/css/all-inclusive-plan.min.css', __FILE__ ), array(), MO2F_VERSION );
+				}
+				$page_protection_settings = get_site_option( 'mo2f_page_protection_addon_settings' );
+				$pp_addon_installed       = isset( $page_protection_settings['addon_installed'] ) ? true : false;
+				if ( ! $pp_addon_installed ) {
+					wp_enqueue_style( 'mo_2f_all_inclusive_plan_div_style', plugins_url( 'includes/css/mo2f-disable-div.css', __FILE__ ), array(), MO2F_VERSION );
+				}
+				wp_enqueue_style(
+					'mo_2f_admin_wp_skin_style',
+					plugins_url( 'includes/css/mo2f-admin-wp-skin.css', __FILE__ ),
+					array( 'mo_wpns_main_style', 'mo_wpns_admin_settings_style', 'mo_2f_twofa_settings_style' ),
+					MO2F_VERSION
+				);
+				// Loaded last so it wins the cascade over the styles above.
+				wp_enqueue_style( 'mo2f_tokens', plugins_url( 'includes/css/mo2f-tokens.min.css', __FILE__ ), array(), MO2F_VERSION );
+				wp_enqueue_style( 'mo2f_redesign_admin', plugins_url( 'includes/css/mo2f-redesign-admin.min.css', __FILE__ ), array( 'mo2f_tokens' ), MO2F_VERSION );
+				// Covers the account-setup popups (GA/KBA/phone setup wizard) that can render on these admin pages.
+				wp_enqueue_style( 'mo2f_responsive_popup', plugins_url( 'includes/css/mo2f-responsive-popup.css', __FILE__ ), array( 'mo2f_tokens' ), MO2F_VERSION );
+			}
+		}
+		/**
+		 * Including javascript files on 2fa dashboard.
+		 *
+		 * @param int $hook - Hook suffix for the current admin page.
+		 * @return void
+		 */
+		public function mo_wpns_settings_script( $hook ) {
+			global $mo2f_dir_name;
+			if ( strpos( $hook, 'page_mo_2fa' ) ) {
+				wp_enqueue_script( 'mo_wpns_admin_settings_script', plugins_url( 'includes/js/settings_page.min.js', __FILE__ ), array( 'jquery' ), MO2F_VERSION, false );
+				wp_localize_script(
+					'mo_wpns_admin_settings_script',
+					'settings_page_object',
+					array(
+						'nonce'               => wp_create_nonce( 'mo2f_settings_nonce' ),
+						'contactus_nonce'     => wp_create_nonce( 'mo-two-factor-ajax-nonce' ),
+						'whitelabeling_nonce' => wp_create_nonce( 'mo2f-white-labelling-ajax-nonce' ),
+					)
+				);
+				wp_enqueue_script( 'mo_wpns_hide_warnings_script', plugins_url( 'includes/js/hide.min.js', __FILE__ ), array( 'jquery' ), MO2F_VERSION, false );
+				wp_enqueue_script( 'mo_wpns_admin_settings_phone_script', plugins_url( 'includes/js/phone.min.js', __FILE__ ), array(), MO2F_VERSION, false );
+				wp_enqueue_script( 'mo2f-script-handle', plugins_url( 'includes/js/mo2f-color-picker.js', __FILE__ ), array( 'wp-color-picker' ), MO2F_VERSION, true );
+				wp_enqueue_script( 'mo_wpns_admin_datatable_script', plugins_url( 'includes/js/jquery.dataTables.min.js', __FILE__ ), array( 'jquery' ), MO2F_VERSION, false );
+				wp_enqueue_script( 'mo_wpns_min_qrcode_script', plugins_url( '/includes/jquery-qrcode/jquery-qrcode.min.js', __FILE__ ), array(), MO2F_VERSION, false );
+				wp_enqueue_script( 'jquery-ui-core' );
+				wp_enqueue_script( 'jquery-ui-autocomplete' );
+				wp_enqueue_script( 'mo_2fa_select2_script', plugins_url( '/includes/js/select2.min.js', __FILE__ ), array(), MO2F_VERSION, false );
+				if ( file_exists( $mo2f_dir_name . 'includes' . DIRECTORY_SEPARATOR . 'js' . DIRECTORY_SEPARATOR . 'basic-plan.min.js' ) ) {
+					wp_enqueue_script( 'mo_2fa_basic_plan_script', plugins_url( '/includes/js/basic-plan.min.js', __FILE__ ), array(), MO2F_VERSION, false );
+				}
+				if ( file_exists( $mo2f_dir_name . 'includes' . DIRECTORY_SEPARATOR . 'js' . DIRECTORY_SEPARATOR . 'enterprise-plan.min.js' ) ) {
+					wp_enqueue_script( 'mo_2fa_enterprise_plan_script', plugins_url( '/includes/js/enterprise-plan.min.js', __FILE__ ), array(), MO2F_VERSION, false );
+				}
+				if ( file_exists( $mo2f_dir_name . 'includes' . DIRECTORY_SEPARATOR . 'js' . DIRECTORY_SEPARATOR . 'all-inclusive-plan.min.js' ) ) {
+					wp_enqueue_script( 'mo_2fa_all_inclusive_plan_script', plugins_url( '/includes/js/all-inclusive-plan.min.js', __FILE__ ), array(), MO2F_VERSION, false );
+				}
+				$page_protection_settings = get_site_option( 'mo2f_page_protection_addon_settings' );
+				$pp_addon_installed       = isset( $page_protection_settings['addon_installed'] ) ? true : false;
+				if ( ! $pp_addon_installed ) {
+					wp_enqueue_script( 'mo_2fa_all_inclusive_plan_div_script', plugins_url( '/includes/js/mo2f-disable-div.js', __FILE__ ), array(), MO2F_VERSION, false );
+				}
+				if ( ! MO2F_PREMIUM_PLAN ) {
+					wp_enqueue_script( 'mo2f_premium_lock_script', plugins_url( '/includes/js/premium-lock.min.js', __FILE__ ), array( 'jquery' ), MO2F_VERSION, false );
+				}
+			}
+		}
+
+		/**
+		 * Handle reset users functionality from user's profile section.
+		 *
+		 * @param string[] $actions - An array of action links to be displayed.
+		 * @param object   $user_object - object for the currently listed user.
+		 * @return string[]
+		 */
+		public function miniorange_reset_users( $actions, $user_object ) {
+			global $mo2fdb_queries;
+			$mo2f_configured_2_f_a_method = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_configured_2FA_method', $user_object->ID );
+			if ( current_user_can( 'edit_users', $user_object->ID ) && $mo2f_configured_2_f_a_method ) {
+				if ( get_current_user_id() !== $user_object->ID ) {
+					$actions['miniorange_reset_users'] = "<a class='miniorange_reset_users' href='" . wp_nonce_url( "users.php?page=reset&action=reset_edit&amp;user_id=$user_object->ID", 'reset_edit', 'mo2f_reset-2fa' ) . "'>" . __( 'Reset 2 Factor', 'miniorange-2-factor-authentication' ) . '</a>';
+				}
+			} elseif ( mo2f_miniorange_check_if_2fa_enabled_for_roles( $user_object->roles ) ) {
+				$edit_link                         = esc_url(
+					add_query_arg(
+						'wp_http_referer',
+						rawurlencode( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ),
+						get_edit_user_link( $user_object->ID )
+					)
+				);
+				$actions['miniorange_reset_users'] = '<a href="' . $edit_link . '">' . __( 'Set 2 Factor', 'miniorange-2-factor-authentication' ) . '</a>';
+			}
+			return $actions;
+		}
+		/**
+		 * Add UTM links for plugin actions on plugins.php.
+		 *
+		 * @param string[] $links - UTM links.
+		 * @return string[]
+		 */
+		public function mo2f_add_plugin_action_link( $links ) {
+			$is_lv_needed = apply_filters( 'mo2f_is_lv_needed', false );
+			if ( ! $is_lv_needed ) {
+				$custom['pro'] = sprintf(
+					'<a href="%1$s" aria-label="%2$s" target="_blank" rel="noopener noreferrer" 
+					style="color: #EF8354; font-weight: 700;" 
+					onmouseover="this.style.color=\'#F5AD8F\';" 
+					onmouseout="this.style.color=\'#EF8354\';"
+					>%3$s</a>',
+					esc_url(
+						add_query_arg(
+							array(
+								'utm_content'  => 'pricing',
+								'utm_campaign' => 'mo2f',
+								'utm_medium'   => 'wp',
+								'utm_source'   => 'wpf_plugin',
+							),
+							MoWpnsConstants::MO2F_UPGRADE_PRICING_URL
+						)
+					),
+					esc_attr( 'Upgrade to Premium' ),
+					esc_html( 'Upgrade to Premium' )
+				);
+			}
+
+			$custom['docs'] = sprintf(
+				'<a href="%1$s" target="_blank" aria-label="%2$s" rel="noopener noreferrer">%3$s</a>',
+				esc_url(
+					add_query_arg(
+						array(
+							'utm_content'  => 'docs',
+							'utm_campaign' => 'mo2f',
+							'utm_medium'   => 'wp',
+							'utm_source'   => 'wpf_plugin',
+						),
+						MoWpnsConstants::MO2F_PLUGINS_PAGE_URL . '/wordpress-two-factor-authentication-setup-guides'
+					)
+				),
+				esc_attr( 'miniorange.com documentation page' ),
+				esc_html( 'Docs' )
+			);
+
+			return array_merge( $custom, (array) $links );
+		}
+
+		/**
+		 * Add column in user profile section of WordPress.
+		 *
+		 * @param string[] $columns - The column header labels keyed by column ID.
+		 * @return string[]
+		 */
+		public function mo2f_mapped_email_column( $columns ) {
+			$columns['current_method'] = '2FA Method';
+			return $columns;
+		}
+		/**
+		 * Users page to reset 2FA for specific user
+		 *
+		 * @return void
+		 */
+		public function mo2f_reset_2fa_for_users_by_admin() {
+			$nonce = wp_create_nonce( 'ResetTwoFnonce' );
+			if ( ! isset( $_GET['mo2f_reset-2fa'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['mo2f_reset-2fa'] ) ), 'reset_edit' ) ) {
+				wp_send_json( 'ERROR' );
+			}
+			if ( isset( $_GET['action'] ) && sanitize_text_field( wp_unslash( $_GET['action'] ) ) === 'reset_edit' ) {
+				$user_id   = isset( $_GET['user_id'] ) ? sanitize_text_field( wp_unslash( $_GET['user_id'] ) ) : '';
+				$user_info = get_userdata( $user_id );
+				if ( is_numeric( $user_id ) && $user_info ) {
+					?>
+				<div class="wrap">
+					<form method="post" name="reset2fa" id="reset2fa" action="<?php echo esc_url( 'users.php' ); ?>">
+						<h1>Reset 2nd Factor</h1>
+
+						<p>You have specified this user for reset:</p>
+
+						<ul>
+							<li>ID #<?php echo esc_html( $user_info->ID ); ?>: <?php echo esc_html( $user_info->user_login ); ?></li>
+						</ul>
+						<input type="hidden" name="userid" value="<?php echo esc_attr( $user_id ); ?>">
+						<input type="hidden" name="miniorange_reset_2fa_option" value="mo_reset_2fa">
+						<input type="hidden" name="nonce" value="<?php echo esc_attr( $nonce ); ?>">
+						<p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Confirm Reset"></p>
+					</form>
+				</div>
+
+					<?php
+				} else {
+					?>
+				<h2> Invalid User Id </h2>
+					<?php
+				}
+			}
+		}
+		/**
+		 * Function to save settings on 2FA reset.
+		 *
+		 * @return void
+		 */
+		public function miniorange_reset_save_settings() {
+			$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+			if ( ! wp_verify_nonce( $nonce, 'ResetTwoFnonce' ) ) {
+				return;
+			}
+			if ( isset( $_POST['miniorange_reset_2fa_option'] ) && sanitize_text_field( wp_unslash( $_POST['miniorange_reset_2fa_option'] ) ) === 'mo_reset_2fa' ) {
+				$user_id = isset( $_POST['userid'] ) && ! empty( $_POST['userid'] ) ? sanitize_text_field( wp_unslash( $_POST['userid'] ) ) : '';
+				if ( ! empty( $user_id ) ) {
+					$user_object  = wp_get_current_user();
+					$capabilities = $user_object->allcaps;
+
+					if ( current_user_can( 'edit_users' ) || ( isset( $capabilities['edit_users'] ) && $capabilities['edit_users'] ) ) {
+
+						global $mo2fdb_queries;
+						$mo2f_reset_target = get_userdata( $user_id );
+						$mo2f_prior_method = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_configured_2FA_method', $user_id );
+						delete_user_meta( $user_id, 'mo2f_kba_challenge' );
+						delete_user_meta( $user_id, 'mo2f_2FA_method_to_configure' );
+						delete_user_meta( $user_id, MoWpnsConstants::SECURITY_QUESTIONS );
+						delete_user_meta( $user_id, 'mo2f_chat_id' );
+						delete_user_meta( $user_id, 'mo2f_whatsapp_num' );
+						delete_user_meta( $user_id, 'mo2f_whatsapp_id' );
+						delete_user_meta( $user_id, 'mo2f_configure_2FA' );
+						$mo2fdb_queries->mo2f_delete_user_details( $user_id );
+
+						global $mo2f_wpns_db_queries;
+						$mo2f_wpns_db_queries->mo2f_insert_transaction_audit(
+							MoWpnsUtility::get_client_ip(),
+							$mo2f_reset_target ? $mo2f_reset_target->user_login : $user_id,
+							MoWpnsConstants::ADMIN_2FA_RESET,
+							MoWpnsConstants::SUCCESS,
+							MoWpnsUtility::get_current_url(),
+							$user_object->ID,
+							$mo2f_prior_method ? $mo2f_prior_method : null
+						);
+						if ( $mo2f_prior_method ) {
+							\TwoFA\Helper\Mo2f_Common_Helper::mo2f_notify_user_2fa_reset_by_admin( $user_id );
+						}
+						delete_user_meta( $user_id, 'mo2f_2FA_method_to_test' );
+						delete_site_option( 'mo2f_user_login_status_' . $user_id );
+						delete_site_option( 'mo2f_grace_period_status_' . $user_id );
+						delete_user_meta( $user_id, 'mo2f_user_profile_set' );
+						delete_user_meta( $user_id, 'mo2f_grace_period_start_time' );
+						delete_user_meta( $user_id, 'mo_backup_code_generated' );
+						delete_user_meta( $user_id, 'mo2f_rba_device_details' );
+						delete_user_meta( $user_id, 'mo2f_secret_ga' );
+						delete_user_meta( $user_id, 'mo2f_gauth_key' );
+						delete_user_meta( $user_id, 'mo2f_ga_qrCode' );
+					}
+				}
+			}
+		}
+		/**
+		 * Get mapped user profile column
+		 *
+		 * @param string $value Row value to be shown.
+		 * @param string $column_name Column name.
+		 * @param  int    $user_id User ID of the details to be shown.
+		 * @return string
+		 */
+		public function mo2f_mapped_email_column_content( $value, $column_name, $user_id ) {
+			global $mo2fdb_queries;
+			$current_method = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_configured_2FA_method', $user_id );
+			if ( ! $current_method ) {
+				$check_if_skipped = $mo2fdb_queries->mo2f_get_user_detail( 'mo2f_2factor_enable_2fa_byusers', $user_id );
+				if ( ! (int) $check_if_skipped ) {
+					$current_method = 'Two-Factor skipped by user';
+				} else {
+					$current_method = 'Not Registered for 2FA';
+				}
+			}
+			if ( 'current_method' === $column_name ) {
+				return $current_method;
+			}
+			return $value;
+		}
+
+		/**
+		 * Check whether email should be sent after plugin update.
+		 *
+		 * @return void
+		 */
+		public function mo2f_mail_send() {
+			if ( get_site_option( 'mo2f_mail_notify_new_release' ) === 'on' ) {
+				if ( ! get_site_option( 'mo2f_feature_vers' ) ) {
+					$this->mo2f_email_send();
+				} else {
+					$current_versions = get_site_option( 'mo2f_feature_vers' );
+
+					if ( $current_versions < MoWpnsConstants::DB_FEATURE_MAIL ) {
+						$this->mo2f_email_send();
+					}
+				}
+			}
+		}
+		/**
+		 * Function contains Email template to send to users after updating the plugin.
+		 *
+		 * @return void
+		 */
+		public function mo2f_email_send() {
+			$subject  = 'miniOrange 2FA V' . MO2F_VERSION . ' | What\'s New?';
+			$messages = mo2f_mail_tem();
+			$email    = get_site_option( 'admin_email' );
+
+			update_site_option( 'mo2f_feature_vers', MoWpnsConstants::DB_FEATURE_MAIL );
+			if ( empty( $email ) ) {
+				$user  = wp_get_current_user();
+				$email = $user->user_email;
+			}
+			if ( is_email( $email ) ) {
+				MocURL::mo2f_send_cloud_email( $email, $subject, $messages );
+			}
+		}
+
+		/**
+		 * Migrate whitelisted IPs from the custom `mo2f_whitelist_ips_table` to a WordPress site option.
+		 *
+		 * This function retrieves all the whitelisted IP data from the `mo2f_whitelist_ips_table`,
+		 * updates the `mo2f_whitelisted_ips_data` site option with the valid IP data,
+		 * deletes the old table, and sets an option to indicate that the migration is complete.
+		 *
+		 * @global wpdb $wpdb WordPress database abstraction object.
+		 * @return void
+		 */
+		public function mo2f_migrate_whitelisted_ips_table() {
+			global $wpdb;
+			global $mo2f_wpns_db_queries;
+			global $mo2fdb_queries;
+			if ( get_site_option( 'mo2f_whitelisted_ips_migrated' ) ) {
+				return;
+			}
+			$old_network_whitelisted_ips_data = $mo2f_wpns_db_queries->mo2f_get_old_table_data( 'mo2f_network_whitelisted_ips' );
+			if ( ! empty( $old_network_whitelisted_ips_data ) ) {
+				$whitelisted_ips = array();
+				foreach ( $old_network_whitelisted_ips_data as $row ) {
+					$ip_data           = array_filter(
+						array(
+							'id'                => $row['id'],
+							'ip_address'        => $row['ip_address'],
+							'created_timestamp' => $row['created_timestamp'],
+							'plugin_path'       => $row['plugin_path'] ?? null,
+						),
+						function ( $value ) {
+							return null !== $value;
+						}
+					);
+					$whitelisted_ips[] = $ip_data;
+				}
+				update_site_option( 'mo2f_whitelisted_ips', $whitelisted_ips );
+			}
+			$mo2fdb_queries->mo2f_drop_table( 'mo2f_network_whitelisted_ips' );
+			update_site_option( 'mo2f_whitelisted_ips_migrated', true );
+		}
+
+		/**
+		 * Migrate blocked IPs from the custom `mo2f_network_blocked_ips` table to a WordPress site option.
+		 *
+		 * This function retrieves all the blocked IP data from the `mo2f_network_blocked_ips` table,
+		 * filters the entries, and updates the `mo2f_blocked_ips_data` site option with the valid IP data.
+		 * After the migration, it deletes the old table and sets an option to indicate that the migration is complete.
+		 *
+		 * @global wpdb $wpdb WordPress database abstraction object.
+		 * @return void
+		 */
+		public function mo2f_migrate_network_blocked_ips_table() {
+			global $mo2f_wpns_db_queries;
+			global $mo2fdb_queries;
+			if ( get_site_option( 'mo2f_blocked_ips_migrated' ) ) {
+				return;
+			}
+			$old_network_blocked_ips_data = $mo2f_wpns_db_queries->mo2f_get_old_table_data( 'mo2f_network_blocked_ips' );
+			if ( ! empty( $old_network_blocked_ips_data ) ) {
+				$blocked_ips = array();
+				foreach ( $old_network_blocked_ips_data as $row ) {
+					$ip_data       = array_filter(
+						array(
+							'id'                => $row['id'],
+							'ip_address'        => $row['ip_address'],
+							'reason'            => $row['reason'],
+							'blocked_for_time'  => $row['blocked_for_time'],
+							'created_timestamp' => $row['created_timestamp'],
+						),
+						function ( $value ) {
+							return null !== $value;
+						}
+					);
+					$blocked_ips[] = $ip_data;
+				}
+				update_site_option( 'mo2f_blocked_ips_data', $blocked_ips );
+			}
+			$mo2fdb_queries->mo2f_drop_table( 'mo2f_network_blocked_ips' );
+			update_site_option( 'mo2f_blocked_ips_migrated', true );
+		}
+
+		/**
+		 * Migrate user details from the custom `mo2f_user_details` table to the WordPress `usermeta` table.
+		 *
+		 * @global wpdb $wpdb WordPress database abstraction object.
+		 * @return void
+		 */
+		public function mo2f_migrate_user_details() {
+			global $wpdb;
+			global $mo2fdb_queries;
+			global $mo2f_wpns_db_queries;
+			if ( get_site_option( 'mo2f_user_details_migrated' ) ) {
+				return;
+			}
+
+			$old_user_details_data = $mo2f_wpns_db_queries->mo2f_get_old_table_data( 'mo2f_user_details' );
+
+			if ( ! empty( $old_user_details_data ) ) {
+				foreach ( $old_user_details_data as $row ) {
+					$user_id               = $row['user_id'];
+					$configured_2fa_method = ! empty( $row['mo2f_configured_2FA_method'] ) ? strtoupper( $row['mo2f_configured_2FA_method'] ) : '';
+					$configured_2fa_map    = array(
+						'SECURITY QUESTIONS' => 'KBA',
+						'EMAIL VERIFICATION' => 'OUT OF BAND EMAIL',
+						'OTP OVER SMS'       => 'SMS',
+						'OTP OVER EMAIL'     => 'EMAIL',
+					);
+					if ( isset( $configured_2fa_map [ $configured_2fa_method ] ) ) {
+						$configured_2fa_method = $configured_2fa_map [ $configured_2fa_method ];
+					}
+					$user_data = array_filter(
+						array(
+							'mo2f_OTPOverSMS_config_status' => $row['mo2f_OTPOverSMS_config_status'] ?? null,
+							'mo2f_miniOrangePushNotification_config_status' => $row['mo2f_miniOrangePushNotification_config_status'] ?? null,
+							'mo2f_miniOrangeQRCodeAuthentication_config_status' => $row['mo2f_miniOrangeQRCodeAuthentication_config_status'] ?? null,
+							'mo2f_miniOrangeSoftToken_config_status' => $row['mo2f_miniOrangeSoftToken_config_status'] ?? null,
+							'mo2f_AuthyAuthenticator_config_status' => $row['mo2f_AuthyAuthenticator_config_status'] ?? null,
+							'mo2f_EmailVerification_config_status' => $row['mo2f_EmailVerification_config_status'] ?? null,
+							'mo2f_SecurityQuestions_config_status' => $row['mo2f_SecurityQuestions_config_status'] ?? null,
+							'mo2f_GoogleAuthenticator_config_status' => $row['mo2f_GoogleAuthenticator_config_status'] ?? null,
+							'mo2f_OTPOverEmail_config_status' => $row['mo2f_OTPOverEmail_config_status'] ?? null,
+							'mo2f_OTPOverTelegram_config_status' => $row['mo2f_OTPOverTelegram_config_status'] ?? null,
+							'mo2f_OTPOverWhatsapp_config_status' => $row['mo2f_OTPOverWhatsapp_config_status'] ?? null,
+							'mo2f_DuoAuthenticator_config_status' => $row['mo2f_DuoAuthenticator_config_status'] ?? null,
+							'mobile_registration_status' => $row['mobile_registration_status'] ?? null,
+							'mo2f_2factor_enable_2fa_byusers' => $row['mo2f_2factor_enable_2fa_byusers'] ?? null,
+							'mo2f_configured_2FA_method' => $configured_2fa_method,
+							'mo2f_user_phone'            => $row['mo2f_user_phone'] ?? null,
+							'mo2f_user_whatsapp'         => $row['mo2f_user_whatsapp'] ?? null,
+							'mo2f_user_email'            => $row['mo2f_user_email'] ?? null,
+							'user_registration_with_miniorange' => $row['user_registration_with_miniorange'] ?? null,
+							'mo_2factor_user_registration_status' => $row['mo_2factor_user_registration_status'] ?? null,
+						),
+						function ( $value ) {
+							return null !== $value;
+						}
+					);
+					update_user_meta( $user_id, 'mo2f_user_2fa_data', $user_data );        }
+				wp_cache_delete( 'mo2f_all_user_2fa_meta', 'mo2f_user_2fa_meta_cache' );
+			}
+			$mo2fdb_queries->mo2f_drop_table( 'mo2f_user_details' );
+			update_site_option( 'mo2f_user_details_migrated', true );
+		}
+		/**
+		 * Remove OTP over Telegram from enabled methods and reset users who had it configured.
+		 *
+		 * @global wpdb $wpdb WordPress database abstraction object.
+		 * @return void
+		 */
+		public function mo2f_remove_telegram_otp_method() {
+			global $wpdb;
+
+			if ( get_site_option( 'mo2f_telegram_method_removed' ) ) {
+				return;
+			}
+
+			$enabled_methods = (array) get_site_option(
+				'mo2f_auth_methods_for_users',
+				array(
+					MoWpnsConstants::GOOGLE_AUTHENTICATOR,
+					MoWpnsConstants::OTP_OVER_SMS,
+					MoWpnsConstants::OTP_OVER_EMAIL,
+					MoWpnsConstants::OTP_OVER_WHATSAPP,
+					MoWpnsConstants::OUT_OF_BAND_EMAIL,
+					MoWpnsConstants::SECURITY_QUESTIONS,
+				)
+			);
+			$enabled_methods = array_values(
+				array_diff( $enabled_methods, array( 'TELEGRAM' ) )
+			);
+			update_site_option( 'mo2f_auth_methods_for_users', $enabled_methods );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time admin migration; targets only Telegram users.
+			$user_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s",
+					MoWpnsConstants::USER_DEATIL_META_KEY,
+					'%"mo2f_configured_2FA_method";s:8:"TELEGRAM"%'
+				)
+			);
+
+			if ( ! empty( $user_ids ) ) {
+				foreach ( $user_ids as $user_id ) {
+					$user_data = get_user_meta( (int) $user_id, MoWpnsConstants::USER_DEATIL_META_KEY, true );
+					if ( ! is_array( $user_data ) || ! isset( $user_data['mo2f_configured_2FA_method'] ) || 'TELEGRAM' !== $user_data['mo2f_configured_2FA_method'] ) {
+						continue;
+					}
+					$user_data['mo2f_configured_2FA_method']           = '';
+					$user_data['mo2f_OTPOverTelegram_config_status']   = false;
+					$user_data['mo_2factor_user_registration_status']  = MoWpnsConstants::MO_2_FACTOR_INITIALIZE_TWO_FACTOR;
+					update_user_meta( (int) $user_id, MoWpnsConstants::USER_DEATIL_META_KEY, $user_data );
+					delete_user_meta( (int) $user_id, 'mo2f_chat_id' );
+					delete_user_meta( (int) $user_id, 'mo2f_telegram_time' );
+					delete_user_meta( (int) $user_id, 'mo2f_otp_token' );
+				}
+				wp_cache_delete( 'mo2f_all_user_2fa_meta', 'mo2f_user_2fa_meta_cache' );
+			}
+
+			update_site_option( 'mo2f_telegram_method_removed', true );
+		}
+		/**
+		 * OTP Over SMS and Email Verification moved to premium-only; reset users who had
+		 * either configured as their active 2FA method so they set up a new method on login.
+		 *
+		 * @global wpdb $wpdb WordPress database abstraction object.
+		 * @return void
+		 */
+		public function mo2f_reset_premium_only_2fa_methods() {
+			global $wpdb;
+
+			if ( get_site_option( 'mo2f_premium_only_methods_reset' ) ) {
+				return;
+			}
+
+			$mo2f_legacy_free_methods = array(
+				MoWpnsConstants::OTP_OVER_SMS      => 'mo2f_OTPOverSMS_config_status',
+				MoWpnsConstants::OUT_OF_BAND_EMAIL => 'mo2f_EmailVerification_config_status',
+			);
+
+			foreach ( $mo2f_legacy_free_methods as $mo2f_method => $mo2f_config_status_key ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time admin migration; targets only users on a now-premium-only method.
+				$user_ids = $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s",
+						MoWpnsConstants::USER_DEATIL_META_KEY,
+						'%"mo2f_configured_2FA_method";s:' . strlen( $mo2f_method ) . ':"' . $mo2f_method . '"%'
+					)
+				);
+
+				if ( empty( $user_ids ) ) {
+					continue;
+				}
+
+				foreach ( $user_ids as $user_id ) {
+					$user_data = get_user_meta( (int) $user_id, MoWpnsConstants::USER_DEATIL_META_KEY, true );
+					if ( ! is_array( $user_data ) || ! isset( $user_data['mo2f_configured_2FA_method'] ) || $mo2f_method !== $user_data['mo2f_configured_2FA_method'] ) {
+						continue;
+					}
+					$user_data['mo2f_configured_2FA_method']          = '';
+					$user_data[ $mo2f_config_status_key ]             = false;
+					$user_data['mo_2factor_user_registration_status'] = MoWpnsConstants::MO_2_FACTOR_INITIALIZE_TWO_FACTOR;
+					update_user_meta( (int) $user_id, MoWpnsConstants::USER_DEATIL_META_KEY, $user_data );
+				}
+			}
+			wp_cache_delete( 'mo2f_all_user_2fa_meta', 'mo2f_user_2fa_meta_cache' );
+
+			update_site_option( 'mo2f_premium_only_methods_reset', true );
+		}
+		/**
+		 * Forces the email-template editors to open in Visual mode by pre-seeding the
+		 * in-memory (not persisted) user-settings cache, since Visual/Code is one
+		 * global per-user setting shared by every wp_editor() instance.
+		 *
+		 * @return void
+		 */
+		public function mo2f_force_visual_editor_for_email_templates() {
+			if ( ! isset( $_GET['page'] ) || 'mo_2fa_white_labelling' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page-slug check, no state change.
+				return;
+			}
+			global $_updated_user_settings;
+			$_updated_user_settings           = get_all_user_settings();
+			$_updated_user_settings['editor'] = 'tinymce';
+		}
+
+		/**
+		 * Drop table wpns_attack_logs and mo2f_network_email_sent_audit.
+		 *
+		 * @return void
+		 */
+		public function mo2f_drop_wpns_attack_logs_and_network_email_sent_audit() {
+			global $mo2fdb_queries;
+			if ( get_site_option( 'mo2f_wpns_attack_logs_and_mo2f_network_email_sent_audit_dropped' ) ) {
+				return;
+			}
+			$mo2fdb_queries->mo2f_drop_table( 'wpns_attack_logs' );
+			$mo2fdb_queries->mo2f_drop_table( 'mo2f_network_email_sent_audit' );
+			update_site_option( 'mo2f_wpns_attack_logs_and_mo2f_network_email_sent_audit_dropped', true );
+		}
+	}
+}
+require_once 'class-mo2f-classloader.php';
+$mo2f_class_loader = new Mo2f_Classloader( 'TwoFA', realpath( __DIR__ . DIRECTORY_SEPARATOR . '..' ) );
+$mo2f_class_loader->mo2f_autoload();
+new Miniorange_TwoFactor();
+Mo2fInit::instance();
+
+?>

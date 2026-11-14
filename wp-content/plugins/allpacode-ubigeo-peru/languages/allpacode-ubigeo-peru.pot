@@ -1,0 +1,27 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: AllpaCode Ubigeo Perú 1.0.1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+
+msgid "Ubigeo Perú"
+msgstr ""
+
+msgid "Departamento / Región"
+msgstr ""
+
+msgid "Provincia"
+msgstr ""
+
+msgid "Distrito"
+msgstr ""
+
+msgid "Selecciona un departamento"
+msgstr ""
+
+msgid "Selecciona una provincia"
+msgstr ""
+
+msgid "Selecciona un distrito"
+msgstr ""

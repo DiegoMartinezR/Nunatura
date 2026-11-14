@@ -1,0 +1,78 @@
+/**
+ * Copyright © Lyra Network and contributors.
+ * This file is part of Izipay plugin for WooCommerce. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @author    Geoffrey Crofte, Alsacréations (https://www.alsacreations.fr/)
+ * @copyright Lyra Network and contributors
+ * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL v2)
+ */
+
+/**
+ * JS tools.
+ */
+var micuentaweb_get_selected_option = function(elementNames) {
+    for (const name of elementNames) {
+        let element = 'input[name="'+ name + '"]';
+        let option = jQuery(element);
+
+        if (option.length == 0) {
+            continue;
+        } else if (option.length > 1) {
+            option = jQuery(element + ':checked');
+        }
+
+        document.cookie = name + '=' + option.val() + '; path=/';
+    }
+};
+
+var micuentawebstd_get_card = function () {
+    micuentaweb_get_selected_option(['micuentawebstd_card_type']);
+};
+
+var micuentawebUpdatePaymentBlock = function (useIdentifier, methodId) {
+    jQuery("ul." + methodId + "-view-top li.block").hide();
+    jQuery("ul." + methodId + "-view-bottom li.block").hide();
+
+    var blockName = useIdentifier ? "id" : "cc";
+    jQuery("li." + methodId + "-" + blockName + "-block").show();
+
+    if ((methodId !== "micuentawebsepa") && (typeof window.FORM_TOKEN != 'undefined')) {
+        micuentawebUpdateFormToken(useIdentifier);
+    }
+
+    jQuery("#micuentaweb_use_identifier").val(useIdentifier);
+};
+
+/**
+ * Reset WooCommerce Blocks checkout state to IDLE so the "Place Order" button
+ * becomes clickable again after KR takes over the payment flow.
+ */
+var micuentawebResetWCBlocksCheckout = function() {
+    if (typeof wp === 'undefined' || typeof wp.data === 'undefined') {
+        return;
+    }
+
+    try {
+        var checkoutStore = wp.data.dispatch('wc/store/checkout');
+        if (!checkoutStore) {
+            return;
+        }
+
+        // WC Blocks >= 9.6 exposes setIdle(); older versions expose __internalSetIdle().
+        if (typeof checkoutStore.__internalSetIdle === 'function') {
+            checkoutStore.__internalSetIdle();
+        } else if (typeof checkoutStore.setIdle === 'function') {
+            checkoutStore.setIdle();
+        }
+
+        // Also reset payment status: WC Blocks keeps it READY when checkout is set back to IDLE,
+        // which triggers an extra POST /checkout on the next "Place Order" click.
+        var paymentStore = wp.data.dispatch('wc/store/payment');
+        if (paymentStore && typeof paymentStore.__internalSetPaymentIdle === 'function') {
+            paymentStore.__internalSetPaymentIdle();
+        }
+    } catch (e) {
+        console.warn('[Micuentaweb] Could not reset WooCommerce checkout state:', e);
+    }
+};

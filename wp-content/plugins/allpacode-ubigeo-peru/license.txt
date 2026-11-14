@@ -1,0 +1,14 @@
+Ubigeo Perú is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 2 of the License, or any later version.
+
+Ubigeo Perú is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+Ubigeo Perú. If not, see https://www.gnu.org/licenses/gpl-2.0.html.
+
+Data attribution: the bundled ubigeo dataset is derived from CONCYTEC/ubigeo-peru,
+which documents concordance between INEI, RENIEC and SUNAT public sources.
+Source: https://github.com/CONCYTEC/ubigeo-peru

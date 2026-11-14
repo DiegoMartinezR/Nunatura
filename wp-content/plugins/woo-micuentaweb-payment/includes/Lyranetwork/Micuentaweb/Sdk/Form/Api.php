@@ -1,0 +1,580 @@
+<?php
+/**
+ * Copyright © Lyra Network and contributors.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @copyright Lyra Network and contributors
+ * @license   See COPYING.md for license details.
+ */
+
+namespace Lyranetwork\Micuentaweb\Sdk\Form;
+
+/**
+ * Utility class for managing parameters checking, internationalization, signature building and more.
+ */
+class Api
+{
+    const ALGO_SHA1 = 'SHA-1';
+    const ALGO_SHA256 = 'SHA-256';
+    const PATTERN_SHORT_PHP_VERSION = '#^\d+(\.\d+)*#';
+
+    public static $SUPPORTED_ALGOS = array(
+        self::ALGO_SHA1,
+        self::ALGO_SHA256
+    );
+
+    /**
+     * The list of encodings supported by the API.
+     *
+     * @var array[string]
+     */
+    public static $SUPPORTED_ENCODINGS = array(
+        'UTF-8',
+        'ASCII',
+        'Windows-1252',
+        'ISO-8859-15',
+        'ISO-8859-1',
+        'ISO-8859-6',
+        'CP1256'
+    );
+
+    /**
+     * Generate a trans_id.
+     * To be independent from shared/persistent counters, we use the number of 1/10 seconds since midnight
+     * which has the appropriatee format (000000-899999) and has great chances to be unique.
+     *
+     * @param int $timestamp
+     * @return string the generated trans_id
+     */
+    public static function generateTransId($timestamp = null)
+    {
+        if (! $timestamp) {
+            $timestamp = time();
+        }
+
+        $parts = explode(' ', microtime());
+        $id = ($timestamp + $parts[0] - strtotime('today 00:00')) * 10;
+        $id = sprintf('%06d', $id);
+
+        return $id;
+    }
+
+    /**
+     * Returns an array of languages accepted by the payment gateway.
+     *
+     * @return array[string][string]
+     */
+    public static function getSupportedLanguages()
+    {
+        return array(
+            'de' => 'German',
+            'en' => 'English',
+            'zh' => 'Chinese',
+            'es' => 'Spanish',
+            'fr' => 'French',
+            'it' => 'Italian',
+            'ja' => 'Japanese',
+            'nl' => 'Dutch',
+            'pl' => 'Polish',
+            'pt' => 'Portuguese',
+            'ru' => 'Russian',
+            'sv' => 'Swedish',
+            'tr' => 'Turkish'
+        );
+    }
+
+    /**
+     * Returns true if the entered language (ISO code) is supported.
+     *
+     * @param string $lang
+     * @return boolean
+     */
+    public static function isSupportedLanguage($lang)
+    {
+        $supportedLanguages = self::getSupportedLanguages();
+        return isset($supportedLanguages[strtolower($lang)]);
+    }
+
+    /**
+     * Return the list of currencies recognized by the payment gateway.
+     *
+     * @param string $whiteLabel
+     * @return array[int][Lyranetwork\Micuentaweb\Sdk\Form\Currency]
+     */
+    public static function getSupportedCurrencies($whiteLabel = '')
+    {
+        $currencies = array();
+        if (! empty($whiteLabel) && class_exists('\Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel')) {
+            $currencies = \Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel::getSupportedCurrencies($whiteLabel);
+        } else {
+            $currencies = array(
+            array('PEN', '604', 2), array('USD', '840', 2)
+            );
+        }
+
+        $supported_currencies = array();
+        foreach ($currencies as $currency) {
+            $supported_currencies[] = new Currency($currency[0], $currency[1], $currency[2]);
+        }
+
+        return $supported_currencies;
+    }
+
+    /**
+     * Return a currency from its 3-letters ISO code.
+     *
+     * @param string $alpha3
+     * @param string $whiteLabel
+     * @return \Lyranetwork\Micuentaweb\Sdk\Form\Currency|null
+     */
+    public static function findCurrencyByAlphaCode($alpha3, $whiteLabel = '')
+    {
+        $list = self::getSupportedCurrencies($whiteLabel);
+        foreach ($list as $currency) {
+            /**
+             * @var \Lyranetwork\Micuentaweb\Sdk\Form\Currency $currency
+             */
+            if ($currency->getAlpha3() === $alpha3) {
+                return $currency;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns a currency form its numeric ISO code.
+     *
+     * @param int $numeric
+     * @param string $whiteLabel
+     * @return \Lyranetwork\Micuentaweb\Sdk\Form\Currency|null
+     */
+    public static function findCurrencyByNumCode($numeric, $whiteLabel = '')
+    {
+        $list = self::getSupportedCurrencies($whiteLabel);
+        foreach ($list as $currency) {
+            /**
+             * @var \Lyranetwork\Micuentaweb\Sdk\Form\Currency $currency
+             */
+            if ($currency->getNum() == $numeric) {
+                return $currency;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Return a currency from its 3-letters or numeric ISO code.
+     *
+     * @param string $code
+     * @param string $whiteLabel
+     * @return \Lyranetwork\Micuentaweb\Sdk\Form\Currency|null
+     */
+    public static function findCurrency($code, $whiteLabel = '')
+    {
+        $list = self::getSupportedCurrencies($whiteLabel);
+        foreach ($list as $currency) {
+            /**
+             * @var \Lyranetwork\Micuentaweb\Sdk\Form\Currency $currency
+             */
+            if ($currency->getNum() === $code || $currency->getAlpha3() === $code) {
+                return $currency;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns currency numeric ISO code from its 3-letters code.
+     *
+     * @param string $alpha3
+     * @param string $whiteLabel
+     * @return string|null
+     */
+    public static function getCurrencyNumCode($alpha3, $whiteLabel = '')
+    {
+        $currency = self::findCurrencyByAlphaCode($alpha3, $whiteLabel);
+        return ($currency instanceof Currency) ? $currency->getNum() : null;
+    }
+
+    /**
+     * Returns an array of card types accepted by the payment gateway.
+     *
+     * @param string $whiteLabel
+     * @return array[string][string]
+     */
+    public static function getSupportedCardTypes($whiteLabel = '')
+    {
+        if (! empty($whiteLabel) && class_exists('\Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel')) {
+            return \Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel::getSupportedCardTypes($whiteLabel);
+        }
+
+        return array(
+            'MAESTRO' => 'Maestro', 'MASTERCARD' => 'Mastercard', 'VISA' => 'Visa', 'VISA_ELECTRON' => 'Visa Electron',
+            'VPAY' => 'V PAY', 'AMEX' => 'American Express', 'CENCOSUD' => 'Cencosud', 'DINERS' => 'Diners',
+            'MASTERCARD_DEBIT' => 'Mastercard Débito', 'OH' => 'OH !', 'PAGOEFECTIVO' => 'PagoEfectivo',
+            'RIPLEY' => 'Ripley', 'VISA_DEBIT' => 'Visa Débito'
+        );
+    }
+
+    /**
+     * Return the statuses list of finalized successful payments (authorized or captured).
+     * @return string[]
+     */
+    public static function getSuccessStatuses()
+    {
+        return array(
+            'AUTHORISED',
+            'CAPTURED',
+            'ACCEPTED',
+            'PARTIALLY_AUTHORISED'
+        );
+    }
+
+    /**
+     * Return the statuses list of payments that are waiting confirmation (successful but
+     * the amount has not been transfered and is not yet guaranteed).
+     * @return string[]
+     */
+    public static function getPendingStatuses()
+    {
+        return array(
+            'INITIAL',
+            'CAPTURE_PENDING',
+            'WAITING_AUTHORISATION',
+            'WAITING_AUTHORISATION_TO_VALIDATE',
+            'UNDER_VERIFICATION',
+            'PRE_AUTHORISED',
+            'WAITING_FOR_PAYMENT',
+            'AUTHORISED_TO_VALIDATE',
+            'SUSPENDED',
+            'PENDING',
+            'REFUND_TO_RETRY'
+        );
+    }
+
+    /**
+     * Return the statuses list of payments interrupted by the buyer.
+     * @return string[]
+     */
+    public static function getCancelledStatuses()
+    {
+        return array(
+            'ABANDONED',
+            'NOT_CREATED',
+            'CANCELLED'
+        );
+    }
+
+    /**
+     * Return the statuses list of payments waiting manual validation from the gateway Back Office.
+     * @return string[]
+     */
+    public static function getToValidateStatuses()
+    {
+        return array(
+            'WAITING_AUTHORISATION_TO_VALIDATE',
+            'AUTHORISED_TO_VALIDATE'
+        );
+    }
+
+    /**
+     * Compute the signature. Parameters must be in UTF-8.
+     *
+     * @param array[string][string] $parameters payment gateway request/response parameters
+     * @param string $key shop certificate
+     * @param string $algo signature algorithm
+     * @param boolean $hashed set to false to get the unhashed signature
+     * @return string
+     */
+    public static function sign($parameters, $key, $algo, $hashed = true)
+    {
+        ksort($parameters);
+
+        $sign = '';
+        foreach ($parameters as $name => $value) {
+            if (strpos($name, 'vads_') === 0) {
+                $sign .= $value . '+';
+            }
+        }
+
+        $sign .= $key;
+
+        if (! $hashed) {
+            return $sign;
+        }
+
+        switch ($algo) {
+            case self::ALGO_SHA1:
+                return sha1($sign);
+            case self::ALGO_SHA256:
+                return base64_encode(hash_hmac('sha256', $sign, $key, true));
+            default:
+                throw new \InvalidArgumentException("Unsupported algorithm passed : {$algo}.");
+        }
+    }
+
+    /**
+     * Get current PHP version without build info.
+     * @return string
+     */
+    public static function shortPhpVersion()
+    {
+        $version = PHP_VERSION;
+
+        $match = array();
+        if (preg_match(self::PATTERN_SHORT_PHP_VERSION, $version, $match) === 1) {
+            $version = $match[0];
+        }
+
+        return $version;
+    }
+
+    /**
+     * Format a given list of e-mails / URLs separated by commas and render them as HTML links.
+     * @param string $links
+     * @return string
+     */
+    public static function formatSupportEmails($links, $label = "Click here")
+    {
+        $formatted = '';
+
+        $parts = explode(', ', $links);
+        foreach ($parts as $part) {
+            if (strpos($part, '@')) {
+                $elts = explode(':', $part);
+                if (count($elts) === 2) {
+                    $label = trim($elts[0]) . ': ';
+                    $email = $elts[1];
+                } elseif (count($elts) === 1) {
+                    $label = '';
+                    $email = $elts[0];
+                } else {
+                    throw new \InvalidArgumentException("Invalid support e-mails string passed: {$links}.");
+                }
+
+                $email = trim($email);
+
+                if (! empty($formatted)) {
+                    $formatted .= '<br />';
+                }
+
+                $formatted .= $label . '<a href="mailto:' . $email . '">' . $email . '</a>';
+            } else {
+                $link = trim($part);
+                $formatted .= '<a href="'. $link.'" target="_blank" rel="noopener noreferrer">' . $label . '</a>';
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Return the list of SEPA countries.
+     *
+     * @return array[string]
+     */
+    public static function getSepaCountries()
+    {
+        return array(
+            'AD', 'AT', 'BE', 'BG', 'CH', 'CY', 'CZ', 'DE', 'DK',
+            'EE', 'ES', 'FI', 'FR', 'GB', 'GI', 'GR', 'HR', 'HU',
+            'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MT',
+            'NL', 'NO', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK', 'SM'
+        );
+    }
+
+    /**
+     * Return the list of Overseas countries.
+     *
+     * @return array[string]
+     */
+    public static function getOverseasCountries()
+    {
+        return array(
+            'BL', 'GF', 'GP', 'MF', 'MQ', 'NC', 'PF', 'PM', 'RE',
+            'TF', 'WF', 'YT'
+        );
+    }
+
+    /**
+     * Returns an array of the online documentation URI of the payment module.
+     *
+     * @param string $whiteLabel
+     * @return array[string][string]
+     */
+    public static function getOnlineDocUri($whiteLabel = '')
+    {
+        if (! empty($whiteLabel) && class_exists('\Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel')) {
+            return \Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel::getOnlineDocUri($whiteLabel);
+        }
+
+        return array(
+            'es' => 'https://secure.micuentaweb.pe/doc/es-PE/plugins/'
+        );
+    }
+
+    /**
+     * Check if the payment was successful (waiting confirmation or captured).
+     *
+     * @return bool
+     */
+    public static function isAcceptedPayment($status)
+    {
+        return in_array($status, self::getSuccessStatuses(), true) || self::isPendingPayment($status);
+    }
+
+    /**
+     * Check if the payment is waiting confirmation (successful but the amount has not been
+     * transfered and is not yet guaranteed).
+     *
+     * @return bool
+     */
+    public static function isPendingPayment($status)
+    {
+        return in_array($status, self::getPendingStatuses(), true);
+    }
+
+    /**
+     * Check if the payment process was interrupted by the buyer.
+     *
+     * @return bool
+     */
+    public static function isCancelledPayment($status)
+    {
+        return in_array($status, self::getCancelledStatuses(), true);
+    }
+
+    /**
+     * Check if the payment is to validate manually in the gateway Back Office.
+     *
+     * @return bool
+     */
+    public static function isToValidatePayment($status)
+    {
+        return in_array($status, self::getToValidateStatuses(), true);
+    }
+
+    /**
+     * Return a formatted string to output as a response to the notification URL call.
+     *
+     * @param string $case shortcut code for current situations. Most useful : payment_ok, payment_ko, auth_fail
+     * @param string $extra_message some extra information to output to the payment gateway
+     * @param string $original_encoding some extra information to output to the payment gateway
+     *
+     * @return string
+     */
+    public static function getOutputForGateway($case = '', $extra_message = '', $original_encoding = 'UTF-8')
+    {
+        // Predefined response messages according to case.
+        $cases = array(
+            'payment_ok' => array(true, 'Accepted payment, order has been updated.'),
+            'payment_ko' => array(true, 'Payment failure, order has been cancelled.'),
+            'payment_ko_bis' => array(true, 'Payment failure.'),
+            'payment_ok_already_done' => array(true, 'Accepted payment, already registered.'),
+            'payment_ko_already_done' => array(true, 'Payment failure, already registered.'),
+            'order_not_found' => array(false, 'Order not found.'),
+            'payment_ko_on_order_ok' => array(false, 'Order status does not match the payment result.'),
+            'auth_fail' => array(false, 'An error occurred while computing the signature.'),
+            'empty_cart' => array(false, 'Empty cart detected before order processing.'),
+            'unknown_status' => array(false, 'Unknown order status.'),
+            'amount_error' => array(false, 'Total paid is different from order amount.'),
+            'abandoned_ignored' => array(false, 'Payment abandoned or Expired but order cycle is not closed.'),
+            'ok' => array(true, ''),
+            'ko' => array(false, '')
+        );
+
+        $success = array_key_exists($case, $cases) ? $cases[$case][0] : false;
+        $message = array_key_exists($case, $cases) ? $cases[$case][1] : '';
+
+        if (! empty($extra_message)) {
+            $message .= ' ' . $extra_message;
+        }
+
+        $message = str_replace("\n", ' ', $message);
+
+        // Set original CMS encoding to convert if necessary response to send to gateway.
+        $encoding = in_array(strtoupper($original_encoding), self::$SUPPORTED_ENCODINGS, true) ?
+            strtoupper($original_encoding) : 'UTF-8';
+        if ($encoding !== 'UTF-8') {
+            $message = iconv($encoding, 'UTF-8', $message);
+        }
+
+        $content = $success ? 'OK-' : 'KO-';
+        $content .= "$message\n";
+
+        $response = '<span style="display:none">';
+        $response .= htmlspecialchars($content, ENT_COMPAT, 'UTF-8');
+        $response .= '</span>';
+
+        return $response;
+    }
+
+    /**
+     * Get a white label-specific property value from the WhiteLabel class.
+     *
+     * Dynamically calls the getter method corresponding to the given property name
+     * on the WhiteLabel class and returns the value associated with the given white label key.
+     *
+     * @param string $whiteLabel the white label identifier
+     * @param string $property the property name to retrieve (e.g. 'features', 'gatewayUrl')
+     * @return mixed|null the property value for the given white label, or null if not found
+     */
+    public static function getWhiteLabelProperty($whiteLabel, $property)
+    {
+        if (! empty($whiteLabel) && class_exists('\Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel')) {
+            $method = 'get' . ucfirst($property);
+            if (method_exists('\Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel', $method)) {
+                $values = \Lyranetwork\Micuentaweb\Sdk\Form\WhiteLabel::$method();
+                if (is_array($values) && array_key_exists($whiteLabel, $values)) {
+                    return $values[$whiteLabel];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a white label-specific URL, falling back to the default URL if not found.
+     *
+     * Looks up the URL for the given type from the WhiteLabel class first; if not found,
+     * falls back to the predefined default URLs for supported types.
+     *
+     * @param string $whiteLabel the white label identifier
+     * @param string $type the URL type ('gatewayUrl', 'restUrl', 'staticUrl', 'logoUrl')
+     * @return string|null the URL for the given type, or null if the type is not recognized
+     */
+    public static function getWhiteLabelUrl($whiteLabel, $type)
+    {
+        $urls = array(
+            'gatewayUrl' => 'https://secure.micuentaweb.pe/vads-payment/',
+            'restUrl' => 'https://api.micuentaweb.pe/api-payment/',
+            'staticUrl' => 'https://static.micuentaweb.pe/static/',
+            'logoUrl' => 'https://secure.micuentaweb.pe/static/latest/images/type-carte/'
+        );
+
+        $url = self::getWhiteLabelProperty($whiteLabel, $type);
+        if ($url !== null) {
+            return $url;
+        }
+
+        return $urls[$type] ?? null;
+    }
+
+    /**
+     * Get the features array for a given white label.
+     *
+     * Returns the features associated with the white label from the WhiteLabel class,
+     * or an empty array if the white label is not found or has no features defined.
+     *
+     * @param string $whiteLabel the white label identifier
+     * @return array the features array for the given white label, or an empty array
+     */
+    public static function getWhiteLabelFeatures($whiteLabel)
+    {
+        return self::getWhiteLabelProperty($whiteLabel, 'features') ?? [];
+    }
+}

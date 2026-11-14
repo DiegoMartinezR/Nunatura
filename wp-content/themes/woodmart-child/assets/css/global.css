@@ -1,0 +1,84 @@
+
+/* ====================================================
+   27. SUBMENÚ DESPLEGABLE DE USUARIO (HEADER DROPDOWN)
+   ==================================================== */
+
+/* Variables locales (Para que funcionen en todas las páginas de la web) */
+.wd-dropdown-my-account {
+    --nuna-cyan: #00C2C7;
+    --nuna-orange: #F07D00;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* 1. Contenedor principal de la tarjeta flotante */
+.wd-dropdown-my-account {
+    background-color: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    padding: 10px !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+}
+
+/* 2. Limpiar estilos nativos de la lista de WoodMart */
+.wd-dropdown-my-account .wd-sub-menu {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.wd-dropdown-my-account .wd-sub-menu li {
+    border: none !important;
+}
+
+.wd-dropdown-my-account .wd-sub-menu li:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* 3. Estilo de los enlaces (Item normal) */
+.wd-dropdown-my-account .wd-sub-menu li a {
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 18px !important;
+    border-radius: 12px !important;
+    color: #555555 !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: transparent !important;
+    text-transform: none !important;
+}
+
+/* 4. Efecto Hover general (Salto a la derecha y fondo turquesa) */
+.wd-dropdown-my-account .wd-sub-menu li a:hover {
+    background-color: var(--nuna-cyan-light) !important;
+    color: var(--nuna-cyan) !important;
+}
+
+/* 5. Detalle especial para el botón de Logout (Salir) */
+.wd-dropdown-my-account .wd-sub-menu li.woocommerce-MyAccount-navigation-link--customer-logout a {
+    color: #e74c3c !important; /* Un tono rojizo sutil para indicar salida */
+    margin-top: 8px !important;
+    border-top: 1px dashed rgba(0,0,0,0.05) !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+.wd-dropdown-my-account .wd-sub-menu li.woocommerce-MyAccount-navigation-link--customer-logout a:hover {
+    background-color: rgba(240, 125, 0, 0.08) !important; /* Fondo Naranja Nunatura muy suave */
+    color: var(--nuna-orange) !important; /* Texto Naranja Nunatura */
+    border-top-color: transparent !important;
+}
+
+/* ====================================================
+   28. RESPONSIVIDAD (PANTALLAS >= 1920px)
+   ==================================================== */
+
+@media (min-width: 1920px) {
+    .wd-dropdown-my-account {
+        padding: 20px !important;
+    }
+    .wd-dropdown-my-account .wd-sub-menu li a {
+        font-size: 16px !important;
+        padding: 14px 22px !important;
+    }
+}

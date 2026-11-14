@@ -1,0 +1,28 @@
+.allpacode-ubigeo {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 14px;
+	width: 100%;
+}
+
+.allpacode-ubigeo label {
+	display: grid;
+	gap: 7px;
+	font-weight: 700;
+}
+
+.allpacode-ubigeo select {
+	width: 100%;
+	min-height: 44px;
+	border: 1px solid #d8dee8;
+	border-radius: 8px;
+	padding: 10px 12px;
+	background: #fff;
+	color: #111827;
+}
+
+@media (max-width: 720px) {
+	.allpacode-ubigeo {
+		grid-template-columns: 1fr;
+	}
+}

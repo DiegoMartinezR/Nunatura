@@ -1,0 +1,311 @@
+.allpacode-admin {
+	--allpacode-admin-bg: #f6f8fb;
+	--allpacode-admin-card: #ffffff;
+	--allpacode-admin-text: #111827;
+	--allpacode-admin-muted: #667085;
+	--allpacode-admin-line: #e6eaf0;
+	--allpacode-admin-primary: #2563eb;
+	--allpacode-admin-accent: #0f766e;
+	--allpacode-admin-soft: #eef4ff;
+	max-width: none;
+	margin: 0;
+	padding: 28px 32px 48px;
+	min-height: calc(100vh - 32px);
+	background: #f5f7fb;
+}
+
+.allpacode-admin__hero {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	margin: 0 0 22px;
+	padding: 30px 32px;
+	background:
+		linear-gradient(135deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.98) 58%, rgba(239,246,255,.98) 100%);
+	border: 1px solid var(--allpacode-admin-line);
+	border-radius: 14px;
+	box-shadow: 0 20px 55px rgba(15, 23, 42, .08);
+}
+
+.allpacode-admin__hero h1 {
+	margin: 5px 0 7px;
+	font-size: 28px;
+	font-weight: 800;
+	letter-spacing: 0;
+	color: var(--allpacode-admin-text);
+}
+
+.allpacode-admin__hero p,
+.allpacode-admin__muted {
+	margin: 0;
+	color: var(--allpacode-admin-muted);
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.allpacode-admin__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	padding: 4px 9px;
+	border-radius: 999px;
+	background: #dbeafe;
+	color: #1d4ed8;
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+
+.allpacode-admin__button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 38px;
+	padding: 0 15px;
+	border-radius: 9px;
+	background: #111827;
+	color: #fff;
+	text-decoration: none;
+	font-weight: 700;
+	box-shadow: 0 12px 24px rgba(17, 24, 39, .18);
+}
+
+.allpacode-admin__button:hover {
+	color: #fff;
+	background: #374151;
+}
+
+.allpacode-admin__stats {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 16px;
+	margin: 0 0 18px;
+}
+
+.allpacode-admin__stat {
+	position: relative;
+	overflow: hidden;
+	background: var(--allpacode-admin-card);
+	border: 1px solid var(--allpacode-admin-line);
+	border-radius: 14px;
+	padding: 22px;
+	box-shadow: 0 12px 30px rgba(15, 23, 42, .055);
+}
+
+.allpacode-admin__stat::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto;
+	height: 4px;
+	background: var(--allpacode-admin-primary);
+}
+
+.allpacode-admin__stat--pending::before { background: #f59e0b; }
+.allpacode-admin__stat--reviewing::before { background: #3b82f6; }
+.allpacode-admin__stat--answered::before { background: #10b981; }
+.allpacode-admin__stat--closed::before { background: #64748b; }
+
+.allpacode-admin__stat span {
+	display: block;
+	color: var(--allpacode-admin-muted);
+	font-weight: 700;
+	font-size: 12px;
+	text-transform: uppercase;
+}
+
+.allpacode-admin__stat strong {
+	display: block;
+	margin: 8px 0 4px;
+	font-size: 34px;
+	line-height: 1;
+	color: var(--allpacode-admin-text);
+}
+
+.allpacode-admin__stat small {
+	color: var(--allpacode-admin-muted);
+}
+
+.allpacode-admin__panel {
+	background: var(--allpacode-admin-card);
+	border: 1px solid var(--allpacode-admin-line);
+	border-radius: 12px;
+	padding: 24px;
+	margin: 18px 0;
+	box-shadow: 0 12px 32px rgba(15, 23, 42, .045);
+}
+
+.allpacode-admin__panel h2 {
+	margin: 0 0 6px;
+	font-size: 18px;
+	font-weight: 800;
+	color: var(--allpacode-admin-text);
+}
+
+.allpacode-admin__danger {
+	border-color: #fecaca;
+	background: #fff7f7;
+}
+
+.allpacode-admin__danger form {
+	display: grid;
+	gap: 14px;
+	max-width: 520px;
+	margin-top: 16px;
+}
+
+.allpacode-admin__danger-button {
+	justify-self: start;
+	color: #b91c1c !important;
+}
+
+.allpacode-admin__layout {
+	display: grid;
+	gap: 16px;
+}
+
+.allpacode-admin__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.allpacode-admin__wide {
+	grid-column: 1 / -1;
+}
+
+.allpacode-admin label {
+	display: grid;
+	gap: 7px;
+	font-weight: 700;
+	color: var(--allpacode-admin-text);
+}
+
+.allpacode-admin label span {
+	font-size: 13px;
+}
+
+.allpacode-admin label small {
+	color: var(--allpacode-admin-muted);
+	font-weight: 500;
+}
+
+.allpacode-admin input[type="text"],
+.allpacode-admin input[type="email"],
+.allpacode-admin input[type="url"],
+.allpacode-admin input[type="number"],
+.allpacode-admin input[type="search"],
+.allpacode-admin input[type="date"],
+.allpacode-admin textarea,
+.allpacode-admin select {
+	width: 100%;
+	max-width: 100%;
+	min-height: 40px;
+	border-color: #d7dde7;
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: none;
+	appearance: auto;
+}
+
+.allpacode-admin textarea {
+	min-height: 120px;
+}
+
+.allpacode-admin input:focus,
+.allpacode-admin textarea:focus,
+.allpacode-admin select:focus {
+	border-color: var(--allpacode-admin-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, .13);
+}
+
+.allpacode-admin__media {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 10px;
+}
+
+.allpacode-admin__toolbar {
+	display: grid;
+	grid-template-columns: minmax(260px, 1.4fr) minmax(180px, .8fr) minmax(180px, .8fr) auto;
+	gap: 14px;
+	align-items: end;
+}
+
+.allpacode-admin__tokenbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 16px 0;
+	padding: 14px;
+	background: #f8fafc;
+	border: 1px solid var(--allpacode-admin-line);
+	border-radius: 10px;
+}
+
+.allpacode-admin__tokenbar strong {
+	margin-right: 6px;
+	color: var(--allpacode-admin-text);
+}
+
+.allpacode-admin__tokenbar code {
+	padding: 4px 8px;
+	border-radius: 999px;
+	background: #e0f2fe;
+	color: #075985;
+}
+
+.allpacode-admin .wp-editor-wrap {
+	margin-top: 12px;
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.allpacode-admin-badge {
+	display: inline-flex;
+	border-radius: 999px;
+	padding: 4px 10px;
+	font-weight: 800;
+	font-size: 12px;
+	background: #e2e8f0;
+}
+
+.allpacode-admin-badge--pending { background: #fef3c7; color: #92400e; }
+.allpacode-admin-badge--reviewing { background: #dbeafe; color: #1e40af; }
+.allpacode-admin-badge--answered { background: #dcfce7; color: #166534; }
+.allpacode-admin-badge--closed { background: #e5e7eb; color: #374151; }
+
+.allpacode-admin .wp-list-table {
+	border-radius: 10px;
+	overflow: hidden;
+	border-color: var(--allpacode-admin-line);
+}
+
+.allpacode-admin .wp-list-table thead th {
+	background: #f8fafc;
+	font-weight: 800;
+}
+
+@media (max-width: 1100px) {
+	.allpacode-admin__stats,
+	.allpacode-admin__toolbar {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 782px) {
+	.allpacode-admin__hero {
+		display: block;
+		padding: 18px;
+	}
+
+	.allpacode-admin__button {
+		margin-top: 14px;
+	}
+
+	.allpacode-admin__stats,
+	.allpacode-admin__grid,
+	.allpacode-admin__toolbar {
+		grid-template-columns: 1fr;
+	}
+}

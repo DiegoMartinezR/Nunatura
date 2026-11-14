@@ -1,0 +1,498 @@
+/******** Inicio de estilos para pagina de carrito ********/
+
+.cart-content-wrapper, form.woocommerce-checkout{
+    gap: 0 30px!important;
+}
+
+@media (min-width: 1280px) {
+    .cart-content-wrapper, form.woocommerce-checkout{
+        gap: 0 60px!important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .cart-content-wrapper, form.woocommerce-checkout{
+        gap: 0 100px!important;
+    }
+}
+
+
+
+/* 5. Animación del Tachito de Basura */
+.nunatura-trash-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    color: #a0a0a0 !important;
+    background: transparent !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+}
+
+/* Ocultar el '×' nativo de WooCommerce si intentara salir */
+.nunatura-trash-btn::before {
+    display: none !important;
+}
+
+.nuna-trash-icon {
+    width: 22px;
+    height: 22px;
+    overflow: visible !important; 
+}
+
+/* Transición suave para el color y la tapa */
+.nunatura-trash-btn, 
+.nuna-trash-lid {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estado Hover: Color turquesa de Nunatura y tapa abierta */
+.nunatura-trash-btn:hover {
+    color: #ff3b3b !important; /* Color rojo */
+    background-color: transparent !important; /* Sin fondo extra */
+}
+
+/* Animación de apertura de la tapa del tacho inclinada */
+.nunatura-trash-btn:hover .nuna-trash-lid {
+    transform-origin: 100% 50%; /* Mantiene el punto de anclaje a la derecha */
+    transform: rotate(30deg) translateY(-1px); /* Inclinación de 30 grados y elevación */
+}
+
+
+/* ==========================================================================
+   NUNATURA - ESTILOS DE CANTIDAD (QUANTITY INPUT)
+   ========================================================================== */
+
+/* 1. Contenedor principal (Forma de píldora) */
+.woocommerce-cart .woocommerce .quantity,
+.woocommerce-cart .woocommerce-page .quantity {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px solid var(--nuna-cyan, #00C2C7) !important;
+    border-radius: 9999px !important; /* Borde completamente redondeado */
+    padding: 0px 10px !important;
+    background-color: transparent !important;
+    width: 120px !important; /* Ajusta el ancho total si lo necesitas más largo o corto */
+    font-family: 'Poppins', sans-serif !important;
+    box-shadow: none !important;
+}
+
+/* 2. Botones de Menos (-) y Más (+) */
+.woocommerce-cart .woocommerce .quantity .minus,
+.woocommerce-cart .woocommerce .quantity .plus {
+    background: transparent !important;
+    border: none !important;
+    color: var(--nuna-cyan, #00C2C7) !important;
+    font-size: 20px !important; /* Tamaño de los signos */
+    line-height: 1 !important;
+    font-weight: 400 !important;
+    cursor: pointer;
+    padding: 0 10px !important;
+    min-height: auto !important;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Efecto hover sutil para los botones */
+.woocommerce-cart .woocommerce .quantity .minus:hover,
+.woocommerce-cart .woocommerce .quantity .plus:hover {
+    transform: scale(1.15);
+    opacity: 0.8;
+}
+
+/* 3. Input de número (El valor central) */
+.woocommerce-cart .woocommerce .quantity .qty {
+    width: 40px !important;
+    height: 25px !important;
+    text-align: center !important;
+    border: none !important;
+    background: transparent !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 700 !important; /* Negrita intensa como en la imagen */
+    font-size: 16px !important; /* Tamaño del número */
+    color: #111111 !important; /* Color casi negro para que resalte */
+    padding: 0 !important;
+    box-shadow: none !important;
+    -moz-appearance: textfield !important; /* Oculta las flechas en Firefox */
+}
+
+/* Ocultar las flechas nativas del input numérico en Chrome/Safari/Edge */
+.woocommerce-cart .woocommerce .quantity .qty::-webkit-outer-spin-button,
+.woocommerce-cart .woocommerce .quantity .qty::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+/*--------------------------------*/
+
+.cart-widget-side .woocommerce div.quantity,
+.cart-widget-side .woocommerce-page div.quantity {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px solid var(--nuna-cyan, #00C2C7) !important;
+    border-radius: 9999px !important; 
+    padding: 0px 10px !important;
+    background-color: transparent !important;
+    width: 120px !important;
+    font-family: 'Poppins', sans-serif !important;
+    box-shadow: none !important;
+    margin-bottom: 3px!important;
+}
+
+/* 2. Botones de Menos (-) y Más (+) */
+.cart-widget-side .woocommerce .quantity .minus,
+.cart-widget-side .woocommerce .quantity .plus {
+    background: transparent !important;
+    border: none !important;
+    color: var(--nuna-cyan, #00C2C7) !important;
+    font-size: 24px !important; /* Tamaño de los signos */
+    line-height: 1 !important;
+    font-weight: 400 !important;
+    cursor: pointer;
+    padding: 0 10px !important;
+    min-height: auto !important;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Efecto hover sutil para los botones */
+.cart-widget-side .woocommerce .quantity .minus:hover,
+.cart-widget-side .woocommerce .quantity .plus:hover {
+    transform: scale(1.15);
+    opacity: 0.8;
+}
+
+/* 3. Input de número (El valor central) */
+.cart-widget-side .woocommerce .quantity .qty {
+    width: 30px !important;
+    height: 10px !important;
+    text-align: center !important;
+    border: none !important;
+    background: transparent !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 700 !important; /* Negrita intensa como en la imagen */
+    font-size: 14px !important; /* Tamaño del número */
+    color: #111111 !important; /* Color casi negro para que resalte */
+    padding: 0 !important;
+    box-shadow: none !important;
+    -moz-appearance: textfield !important; /* Oculta las flechas en Firefox */
+}
+
+/* Ocultar las flechas nativas del input numérico en Chrome/Safari/Edge */
+.cart-widget-side .woocommerce .quantity .qty::-webkit-outer-spin-button,
+.cart-widget-side .woocommerce .quantity .qty::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.cart-widget-side .wd-entities-title {
+    margin-bottom: 3px!important;
+}
+
+.woocommerce-cart .woocommerce-Price-amount span, .woocommerce-cart .woocommerce-Price-amount bdi{
+    font-size: 16px!important;
+}
+
+.cart-widget-side span, .cart-widget-side .woocommerce-Price-amount span, .cart-widget-side .woocommerce-Price-amount bdi{
+    font-size: 14px!important;
+}
+
+.shop_table th{
+    text-transform: none!important;
+    font-weight: 500!important;
+}
+
+.cart-widget-side .wd-heading span{
+    font-size: 16px!important;
+}
+
+@media (min-width: 1920px) {
+    .woocommerce-cart .woocommerce-Price-amount span, .woocommerce-cart .woocommerce-Price-amount bdi{
+        font-size: 18px!important;
+    }
+
+    .shop_table th{
+       font-size: 18px!important;
+    }
+
+    .cart-widget-side span, .cart-widget-side .woocommerce-Price-amount span, .cart-widget-side .woocommerce-Price-amount bdi{
+        font-size: 16px!important;
+    }
+
+    .cart-widget-side .wd-heading span{
+        font-size: 18px!important;
+    }
+
+    .woocommerce-cart .woocommerce .quantity .qty{
+        font-size: 16px!important;
+    }
+}
+
+
+/* .woocommerce-notices-wrapper{
+    display: none!important;
+} */
+
+#coupon_code{
+    border-radius: 12px!important;
+    font-weight: 500!important;
+}
+
+.btn-accent, .checkout-button{
+    font-size: 14px!important;
+}
+
+
+.cart_totals {
+    border-radius: 20px!important;
+}
+
+.cart_totals .cart-totals-inner{
+    border-radius: 20px!important;
+}
+
+.cart_totals h2{
+    text-transform: none!important;
+}
+
+.wd-entities-title a:hover{
+    color: white!important;
+}
+
+.woocommerce-billing-fields h3{
+    text-transform: none!important;
+}
+
+.woocommerce-form-coupon-toggle .woocommerce-info, .woocommerce-form-coupon-toggle .clear{
+    display:none!important
+}
+
+.woocommerce-form-coupon-toggle p{
+    margin-bottom: 0px!important;
+}
+
+div.woocommerce-form-coupon-toggle{
+    padding: 15px!important
+}
+
+.checkout-order-review{
+    max-width: 550px!important;
+    margin: auto!important;
+}
+
+@media (min-width: 1920px) {
+    .checkout-order-review{
+        max-width: 650px!important;
+    }
+}
+
+.woocommerce-checkout>.customer-details .woocommerce-billing-fields{
+    margin-top:0px!important;
+}
+
+.checkout-order-review::after, .checkout-order-review::before{
+    display: none!important;
+    border-radius: 20px!important;
+}
+
+.checkout-order-review{
+    border-radius: 25px!important;
+    margin-top: 20px!important;
+}
+
+@media (min-width: 1920px) {
+    .checkout-order-review{
+    border-radius: 40px!important;
+}
+
+}
+
+#order_review_heading{
+    font-size: 22px!important;
+    text-transform: none!important;
+}
+
+
+@media (min-width: 1920px) {
+   #order_review_heading{
+    font-size: 28px!important;
+    }
+    .woocommerce-checkout h3{
+    font-size: 28px!important;
+    }
+}
+
+.thwcfe-input-field, .select2-selection--single{
+    border-radius: 12px !important;
+    font-weight: 500 !important;
+    border: 2px solid #0cc !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-clip: padding-box !important; /* Evita que el fondo se desborde del radio del borde */
+}
+
+.select2-search--dropdown{
+    display: none!important;
+}
+
+.select2-dropdown--below{
+    border-radius: 12px !important;
+    overflow:hidden!important;
+}
+
+ .select2-results__options{
+    border-radius: 12px !important;
+    overflow-x:hidden!important;
+}
+
+
+
+@media (min-width: 1920px) {
+   .woocommerce-billing-fields label{
+    font-size: 16px!important;
+    }
+    .thwcfe-input-field, .select2-selection--single{
+        font-size: 16px!important;
+    }
+}
+
+#custom_coupon_code{
+    border-radius: 12px !important;
+    font-weight: 500 !important;
+    border: 2px solid #0cc !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-clip: padding-box !important;
+}
+
+#custom_apply_coupon{
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    border: 2px solid #0cc !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-clip: padding-box !important;
+    background-color: #0cc !important;
+    color: white !important;
+    
+}
+
+#order_review .wd-table-wrapper{
+    border-radius: 12px !important;
+}
+
+#custom_apply_coupon{
+    text-transform: capitalize!important;
+}
+
+#place_order{
+    font-size: 16px!important;
+}
+
+
+/* ====================================================
+   ESTILOS PARA ALERTAS Y ERRORES DEL CHECKOUT (NUNATURA)
+   ==================================================== */
+
+/* Contenedor principal con animación de entrada */
+.woocommerce-NoticeGroup-checkout {
+    margin-bottom: 35px !important;
+    animation: nunaErrorSlideIn 0.4s ease-out forwards;
+}
+
+/* La tarjeta del error */
+.site-content .woocommerce-NoticeGroup .woocommerce-error {
+    background-color: #fff2f2 !important; /* Fondo rojo ultra suave */
+    background-image: none !important; /* Quitar cualquier icono gigante de WoodMart */
+    border: none !important;
+    border-left: 5px solid #d63031 !important; /* Borde de atención rojo */
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(214, 48, 49, 0.12) !important;
+    padding: 22px 30px !important;
+    list-style: none !important;
+    margin: 0 !important;
+    font-family: 'Poppins', sans-serif !important;
+    position: relative !important;
+}
+
+/* Estilo de cada línea de error (cada <li>) */
+.site-content .woocommerce-NoticeGroup .woocommerce-error li {
+    color: #444444 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.6 !important;
+    margin-bottom: 12px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    padding-left: 0 !important;
+    background: transparent !important;
+}
+
+@media (min-width: 450px) {
+   .site-content .woocommerce-NoticeGroup .woocommerce-error li {
+        font-size: 15px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+   .site-content .woocommerce-NoticeGroup .woocommerce-error li {
+        font-size: 16px !important;
+    }
+}
+
+/* Quitar margen inferior al último error de la lista */
+.site-content .woocommerce-NoticeGroup .woocommerce-error li:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Icono de advertencia en cada línea (Reemplaza la viñeta aburrida) */
+.site-content .woocommerce-NoticeGroup .woocommerce-error li::before {
+    content: '\26A0' !important; /* Código de ícono de advertencia ⚠ */
+    color: #d63031 !important;
+    font-size: 18px !important;
+    margin-right: 12px !important;
+    font-weight: 800 !important;
+}
+
+/* Estilo para los enlaces de anclaje (ej. el link que te lleva a "Facturación Distrito") */
+.site-content .woocommerce-NoticeGroup .woocommerce-error li a {
+    color: #d63031 !important;
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+    text-decoration-color: rgba(214, 48, 49, 0.3) !important;
+    text-underline-offset: 4px !important;
+    transition: all 0.3s ease !important;
+}
+
+.site-content .woocommerce-NoticeGroup .woocommerce-error li strong {
+    color: #d63031 !important;
+    font-weight: 700 !important;
+}
+
+/* Efecto hover: pasa de rojo a Naranja Nunatura */
+.site-content .woocommerce-NoticeGroup .woocommerce-error li a:hover {
+    color: #F07D00 !important; 
+    text-decoration-color: #F07D00 !important;
+}
+
+/* ====================================================
+   ANIMACIÓN DE ENTRADA SUAVE
+   ==================================================== */
+@keyframes nunaErrorSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+:is(.woocommerce-error,.woocommerce-message,.woocommerce-info):before{
+    display: none!important;
+}

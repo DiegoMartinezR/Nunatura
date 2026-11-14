@@ -1,0 +1,261 @@
+<?php
+/**
+ * Copyright © Lyra Network and contributors.
+ * This file is part of Izipay plugin for WooCommerce. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @author    Geoffrey Crofte, Alsacréations (https://www.alsacreations.fr/)
+ * @copyright Lyra Network and contributors
+ * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL v2)
+ */
+
+use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use Automattic\WooCommerce\Blocks\Payments\PaymentResult;
+use Automattic\WooCommerce\Blocks\Payments\PaymentContext;
+use Lyranetwork\Micuentaweb\Sdk\Form\Api as MicuentawebApi;
+
+require_once 'MicuentawebTools.php';
+
+if (! defined('ABSPATH')) {
+    exit; // Exit if accessed directly.
+}
+
+/**
+ * Micuentaweb payment method integration
+ *
+ * @since 1.10.0
+ */
+final class WC_Gateway_Micuentaweb_Blocks_Support extends AbstractPaymentMethodType
+{
+    /**
+     * ID of the payment method.
+     *
+     * @var string
+     */
+    protected $name;
+
+    /**
+     * Label of the payment method.
+     *
+     * @var string
+     */
+    protected $label = null;
+
+    public function __construct($method_id, $label = null)
+    {
+        $this->name = strtolower($method_id);
+
+        if ($label) {
+            $this->label = $label;
+        }
+    }
+
+    /**
+     * Initializes the payment method type.
+     */
+    public function initialize()
+    {
+        if (strpos($this->name, 'micuentawebother_') === 0) {
+            $this->settings = get_option('woocommerce_micuentawebregroupedother_settings', null);
+        } else {
+            $this->settings = get_option('woocommerce_' . $this->name .'_settings', null);
+        }
+
+        // Load utils script.
+        wp_register_script('micuentaweb-utils', WC_MICUENTAWEB_PLUGIN_URL . 'assets/js/utils.js');
+        wp_enqueue_script('micuentaweb-utils');
+    }
+
+    private function get_card_data_mode()
+    {
+        $option = $this->settings['card_data_mode'] ?? 'REDIRECT';
+        return ($option === 'REST') ? 'SMARTFORMEXT' : $option;
+    }
+
+    public function get_supported_features()
+    {
+        switch ($this->get_name()) {
+            case 'micuentawebsubscription':
+                return array(
+                    'products',
+                    'subscriptions',
+                    'subscription_cancellation',
+                    'subscription_payment_method_change',
+                    'subscription_amount_changes',
+                    'subscription_date_changes',
+                    'subscription_payment_method_change_customer',
+                    'gateway_scheduled_payments',
+                    'subscription_suspension',
+                    'subscription_reactivation'
+                );
+
+            case 'micuentawebwcssubscription':
+            case 'micuentawebsepa':
+                return array(
+                    'products',
+                    'subscriptions',
+                    'subscription_cancellation',
+                    'subscription_payment_method_change',
+                    'subscription_amount_changes',
+                    'subscription_date_changes',
+                    'subscription_payment_method_change_customer',
+                    'subscription_suspension',
+                    'subscription_reactivation',
+                    'multiple_subscriptions',
+                    'subscription_payment_method_change_admin',
+                    'subscription_payment_method_delayed_change',
+                    'tokenization'
+                );
+
+            default:
+                return parent::get_supported_features();
+        }
+    }
+
+    /**
+     * Returns an array of scripts/handles to be registered for this payment method.
+     *
+     * @return array
+     */
+    public function get_payment_method_script_handles()
+    {
+        $asset_path = WC_MICUENTAWEB_PLUGIN_PATH . 'build/index.asset.php';
+        $version = MicuentawebTools::get_contrib();
+
+        $dependencies = array();
+        if (file_exists($asset_path)) {
+            $asset = require $asset_path;
+            $version = is_array($asset) && isset($asset['version']) ? $asset['version'] : $version;
+            $dependencies = is_array($asset) && isset($asset['dependencies']) ? $asset['dependencies']
+                : $dependencies;
+        }
+
+        if (! in_array('wc-blocks-registry', $dependencies, true)) {
+            $dependencies[] = 'wc-blocks-registry';
+        }
+
+        $build_name = (strpos($this->get_name(), 'micuentawebother_') === 0) ? 'micuentawebother' : $this->get_name();
+        if (! wp_script_is('wc-' . $this->get_name() . '-blocks-integration', 'registered')) {
+            wp_register_script(
+                'wc-' . $this->name . '-blocks-integration',
+                WC_MICUENTAWEB_PLUGIN_URL . 'build/' . $build_name . '.js',
+                $dependencies,
+                $version,
+                true
+            );
+        }
+
+        if (($build_name == 'micuentawebother') && ! wp_script_is('wc-micuentawebother-blocks-integration', 'registered')) {
+            wp_register_script(
+                'wc-micuentawebother-blocks-integration',
+                WC_MICUENTAWEB_PLUGIN_URL . 'build/micuentawebother.js',
+                $dependencies,
+                $version,
+                true
+            );
+        }
+
+        wp_set_script_translations(
+            'wc-' . $this->name . '-blocks-integration',
+            'woo-micuentaweb-payment'
+        );
+
+        return array('wc-' . $this->name . '-blocks-integration');
+    }
+
+    /**
+     * Returns if this payment method should be active. If false, the scripts will not be enqueued.
+     *
+     * @return boolean
+     */
+    public function is_active()
+    {
+        if (isset($this->settings['enabled']) && ($this->settings['enabled'] == 'yes')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns an array of key => value pairs of data made available to the payment methods script.
+     *
+     * @return array
+     */
+    public function get_payment_method_data()
+    {
+        if ((! is_admin() && ($this->get_name() !== 'micuentawebother_lyranetwork') && ! apply_filters('woocommerce_available_' . $this->get_name(), null))
+            || is_account_page())
+        {
+            return;
+        }
+
+        $img_url = WC_MICUENTAWEB_PLUGIN_URL . 'assets/images/micuentaweb.png';
+
+        switch ($this->get_name()) {
+            case 'micuentawebklarna':
+            case 'micuentawebfranfinance':
+            case 'micuentawebsepa':
+                $img_url = MicuentawebTools::get_white_label_url(WC_Gateway_Micuentaweb::LOGO_URL) . substr($this->get_name(), strlen('micuentaweb')) . '.png';
+                break;
+
+            case 'micuentawebregroupedother':
+                $img_url = WC_MICUENTAWEB_PLUGIN_URL . 'assets/images/other.png';
+
+                break;
+
+            default:
+                if (strpos($this->get_name(), 'micuentawebother_') === 0) {
+                    $img_url = MicuentawebTools::get_white_label_url(WC_Gateway_Micuentaweb::LOGO_URL) . substr($this->get_name(), strlen('micuentawebother_')) . '.png';
+                }
+
+                break;
+        }
+
+        $data = array(
+            'title'       => $this->label ? $this->label : apply_filters('woocommerce_title_' . $this->name, null),
+            'supports'    => $this->get_supported_features(),
+            'description' => apply_filters('woocommerce_description_' . $this->name, null),
+            'logo_url'    => apply_filters('woocommerce_' . $this->name . '_icon', $img_url)
+        );
+
+        switch ($this->get_name()) {
+            case 'micuentawebstd':
+            case 'micuentawebmulti':
+            case 'micuentawebfranfinance':
+            case 'micuentawebsepa':
+            case 'micuentawebregroupedother':
+            case 'micuentawebwcssubscription':
+                $data['payment_fields'] = apply_filters('woocommerce_micuentaweb_payment_fields_' . $this->get_name(), null);
+
+                if (($this->get_name() === 'micuentawebstd') || ($this->get_name() === 'micuentawebwcssubscription')) {
+                    $data['payment_mode'] = $this->get_card_data_mode();
+                    if (in_array($data['payment_mode'], ['SMARTFORM', 'SMARTFORMEXT', 'SMARTFORMEXTNOLOGOS'])
+                        && $vars = get_transient('micuentaweb_js_vars_' . wp_get_session_token())) {
+                        $data['vars'] = $vars;
+                        $data['hide_smartbutton'] = get_transient('micuentaweb_hide_smartbutton_' . wp_get_session_token());
+                        $data['temporary_token_url'] = add_query_arg('wc-api', 'WC_Gateway_' . ucfirst($this->get_name()) . '_Temporary_Form_Token', home_url('/'));
+                        $data['token_url'] = add_query_arg('wc-api', 'WC_Gateway_' . ucfirst($this->get_name()) . '_Form_Token', home_url('/'));
+
+                        delete_transient('micuentaweb_js_vars_' . wp_get_session_token());
+                        delete_transient('micuentaweb_hide_smartbutton_' . wp_get_session_token());
+                    }
+                }
+
+                break;
+
+            case 'micuentawebother_lyranetwork':
+                if (get_transient('micuentaweb_other_methods')) {
+                    $methods = json_decode(get_transient('micuentaweb_other_methods'), true);
+                    $data['sub_methods'] = array_keys($methods);
+                }
+
+                break;
+
+            default:
+                break;
+        }
+
+        return $data;
+    }
+}

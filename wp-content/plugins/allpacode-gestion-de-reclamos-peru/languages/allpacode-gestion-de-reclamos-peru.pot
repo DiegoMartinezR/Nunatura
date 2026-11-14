@@ -1,0 +1,36 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: AllpaCode Gestión de Reclamos Perú 1.0.12\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+
+msgid "Gestión de Reclamos Virtual"
+msgstr ""
+
+msgid "Datos del consumidor"
+msgstr ""
+
+msgid "Datos del reclamo"
+msgstr ""
+
+msgid "Registrar reclamo"
+msgstr ""
+
+msgid "Pendiente"
+msgstr ""
+
+msgid "En revisión"
+msgstr ""
+
+msgid "Respondido"
+msgstr ""
+
+msgid "Cerrado"
+msgstr ""
+
+msgid "Reclamo"
+msgstr ""
+
+msgid "Queja"
+msgstr ""

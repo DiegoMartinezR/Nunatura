@@ -1,0 +1,237 @@
+<?php
+/**
+ * Copyright © Lyra Network and contributors.
+ * This file is part of Izipay plugin for WooCommerce. See COPYING.md for license details.
+ *
+ * @author    Lyra Network (https://www.lyra.com/)
+ * @author    Geoffrey Crofte, Alsacréations (https://www.alsacreations.fr/)
+ * @copyright Lyra Network and contributors
+ * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL v2)
+ */
+use Lyranetwork\Micuentaweb\Sdk\Form\Api as MicuentawebApi;
+
+class MicuentawebTools
+{
+    const TRANSIENT_EXPIRATION = 3600;
+    const TOKEN_TRANSIENT_EXPIRATION = 900;
+
+    public static function get_contrib()
+    {
+        global $woocommerce;
+
+        // Effective used version.
+        include ABSPATH . WPINC . '/version.php'; // $wp_version.
+        $version = $wp_version . '_' . $woocommerce->version;
+
+        return WC_Gateway_Micuentaweb::CMS_IDENTIFIER . '_' . WC_Gateway_Micuentaweb::PLUGIN_VERSION . '/' . $version
+            . '/' . MicuentawebApi::shortPhpVersion();
+    }
+
+    public static function get_integration_mode()
+    {
+        $std_method_settings = get_option('woocommerce_micuentawebstd_settings', null);
+        if (! is_array($std_method_settings)) {
+            return 'REDIRECT';
+        }
+
+        $card_data_mode = $std_method_settings['card_data_mode'] ?? 'DEFAULT';
+
+        switch ($card_data_mode) {
+            case 'DEFAULT':
+            case 'IFRAME':
+                return 'REDIRECT';
+
+            case 'REST':
+                return 'SMARTFORMEXT';
+
+            default:
+                return $card_data_mode;
+        }
+    }
+
+    public static function is_embedded_payment()
+    {
+        $std_settings = get_option('woocommerce_micuentawebstd_settings', null);
+        $enabled = is_array($std_settings) && isset($std_settings['enabled']) && ($std_settings['enabled'] == 'yes');
+        if (! $enabled) {
+            return false;
+        }
+
+        $modes = ['SMARTFORM', 'SMARTFORMEXT', 'SMARTFORMEXTNOLOGOS'];
+
+        return in_array(self::get_integration_mode(), $modes);
+    }
+
+    public static function use_wallet($cust_id = null, $method = 'micuentawebstd')
+    {
+        global $woocommerce;
+
+        $std_settings = get_option('woocommerce_micuentawebstd_settings', null);
+        if (($method == 'micuentawebstd') && (! is_array($std_settings) || $std_settings['use_customer_wallet'] !== '1')) {
+            return false;
+        }
+
+        if (! self::is_embedded_payment()) {
+            return false;
+        }
+
+        if (! $cust_id) {
+            $cust_id = WC_Gateway_Micuentaweb::get_customer_property($woocommerce->customer, 'id');
+        }
+
+        return ! is_null($cust_id);
+    }
+
+    public static function is_plugin_not_active($plugin)
+    {
+        return is_plugin_active($plugin) ? 'false' : 'true';
+    }
+
+    public static function is_hpos_enabled()
+    {
+        return version_compare(WC_VERSION, '7.1.0', '>=') && class_exists('Automattic\WooCommerce\Utilities\OrderUtil') && Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+    }
+
+    public static function get_user_info()
+    {
+        $comment_text = 'WooCommerce user: ' . get_option('admin_email');
+        $comment_text .= ' ; IP address: ' . self::get_ip_address();
+
+        return $comment_text;
+    }
+
+    public static function get_ip_address()
+    {
+        if (isset($_SERVER['HTTP_X_REAL_IP'])) {
+            return sanitize_text_field(wp_unslash($_SERVER['HTTP_X_REAL_IP']));
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            // Proxy servers can send through this header like this: X-Forwarded-For: client1, proxy1, proxy2.
+            // Make sure we always only send through the first IP in the list which should always be the client IP.
+            $parts = preg_split('/,/', sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])));
+            if (is_array($parts) && ! empty($parts)) {
+                return (string) rest_is_ip_address(trim($parts[0]));
+            }
+        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+            return sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
+        }
+
+        return '';
+    }
+
+    public static function has_checkout_block()
+    {
+        global $post;
+
+        // Checkout page for orders created from BO doesn't use checkout block.
+        if (isset($_GET['pay_for_order'])) {
+            return false;
+        }
+
+        if ($post) {
+            return function_exists('has_block') && has_block('woocommerce/checkout', $post->ID);
+        }
+
+        return function_exists('has_block') && has_block('woocommerce/checkout', wc_get_page_id('checkout'));
+    }
+
+    public static function get_view_order_url($subsc_id)
+    {
+        if (function_exists('wcs_get_subscription')) {
+            $subscription = wcs_get_subscription($subsc_id);
+
+            return $subscription ? $subscription->get_view_order_url() : null;
+        }
+
+        return null;
+    }
+
+    public static function get_token_from_request(array $request)
+    {
+        $payment_method = $request['payment_method'] ?? null;
+        $token_request_key = 'wc-' . $payment_method . '-payment-token';
+        if (! isset($request[$token_request_key]) || $request[$token_request_key] === 'new') {
+            return null;
+        }
+
+        $token = \WC_Payment_Tokens::get(wc_clean($request[$token_request_key]));
+
+        // If the token doesn't belong to this gateway or the current user it's invalid.
+        if (! $token || $payment_method !== $token->get_gateway_id() || $token->get_user_id() !== get_current_user_id()) {
+            return null;
+        }
+
+        return $token->get_token();
+    }
+
+    public static function get_white_label_url($urlName)
+    {
+        return MicuentawebApi::getWhiteLabelUrl(self::get_white_label(), $urlName);
+    }
+
+    public static function get_white_label()
+    {
+        global $micuentaweb_plugin_features;
+
+        if (! ($micuentaweb_plugin_features['whitelabelall'] ?? false)) {
+            return '';
+        }
+
+        $general_settings = get_option('woocommerce_micuentaweb_settings', null);
+        $whiteLabel = is_array($general_settings) ? ($general_settings['white_label'] ?? '') : '';
+
+        if ($whiteLabel !== '' && $whiteLabel !== 'EU') {
+            return $whiteLabel;
+        }
+
+        $default = self::get_default_white_label();
+
+        return $default !== 'EU' ? $default : '';
+    }
+
+    public static function get_default_white_label()
+    {
+        global $micuentaweb_plugin_features;
+
+        if (! ($micuentaweb_plugin_features['whitelabelall'] ?? false)) {
+            return 'EU';
+        }
+
+        $general_settings = get_option('woocommerce_micuentaweb_settings', null);
+        if (! is_array($general_settings)) {
+            return 'EU';
+        }
+
+        foreach (['LAT', 'BR'] as $label) {
+            if (isset($general_settings['platform_url']) && $general_settings['platform_url'] === MicuentawebApi::getWhiteLabelUrl($label, 'gatewayUrl')) {
+                return $label;
+            }
+
+            if (isset($general_settings['rest_url']) && $general_settings['rest_url'] === MicuentawebApi::getWhiteLabelUrl($label, 'restUrl')) {
+                return $label;
+            }
+        }
+
+        return 'EU';
+    }
+
+    public static function get_white_label_feature($feature)
+    {
+        global $micuentaweb_plugin_features;
+
+        $features = $micuentaweb_plugin_features;
+
+        if ($micuentaweb_plugin_features['whitelabelall'] ?? false) {
+            $whiteLabel = self::get_white_label();
+            if ($whiteLabel !== '') {
+                $features = MicuentawebApi::getWhiteLabelFeatures($whiteLabel);
+            }
+        }
+
+        return $features[$feature] ?? false;
+    }
+
+    public static function set_transient($transient, $value, $expiration = self::TRANSIENT_EXPIRATION)
+    {
+        return set_transient($transient, $value, $expiration);
+    }
+}

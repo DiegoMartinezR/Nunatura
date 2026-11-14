@@ -1,0 +1,949 @@
+/* Inicio estilos de dashboard*/
+
+body.woocommerce-account {
+    --nuna-cyan: #00C2C7;
+    --nuna-orange: #F07D00;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    --nuna-shadow-hover: 0 15px 35px rgba(0, 194, 199, 0.15);
+}
+
+body.page-id-1274 {
+    --nuna-cyan: #00C2C7;
+    --nuna-orange: #F07D00;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    --nuna-shadow-hover: 0 15px 35px rgba(0, 194, 199, 0.15);
+}
+
+.woocommerce-MyAccount-content, 
+.woocommerce-MyAccount-navigation {
+    font-family: 'Poppins', sans-serif;
+}
+
+.woocommerce-MyAccount-title {
+    font-weight: 700 !important;
+    color: #333 !important;
+    margin-bottom: 25px !important;
+    text-transform: none !important;
+}
+
+/* 2. Menú Lateral (Navegación) */
+.wd-my-account-sidebar .woocommerce-MyAccount-navigation ul {
+    border: none !important; /* Quita los bordes grises por defecto de Woodmart */
+    padding: 0 !important;
+}
+
+.wd-my-account-sidebar .woocommerce-MyAccount-navigation-link {
+    border: none !important;
+    margin-bottom: 10px;
+}
+
+.wd-my-account-sidebar .woocommerce-MyAccount-navigation-link a {
+    display: block;
+    padding: 10px 20px !important;
+    border-radius: 20px !important; /* Efecto píldora */
+    color: #555 !important;
+    font-weight: 600 !important;
+    background-color: transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Efecto Hover en el menú lateral */
+.wd-my-account-sidebar .woocommerce-MyAccount-navigation-link a:hover {
+    background-color: var(--nuna-cyan-light) !important;
+    color: var(--nuna-cyan) !important;
+    transform: translateX(8px); /* Pequeño salto a la derecha */
+}
+
+/* Estado Activo en el menú lateral */
+.wd-my-account-sidebar .woocommerce-MyAccount-navigation-link.is-active a {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px var(--nuna-cyan-light);
+}
+
+/* 3. Textos de Bienvenida */
+.woocommerce-MyAccount-content p {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.woocommerce-MyAccount-content p a {
+    color: var(--nuna-cyan);
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: color 0.3s;
+}
+
+.woocommerce-MyAccount-content p a:hover {
+    color: var(--nuna-orange);
+}
+
+/* 4. Tarjetas del Escritorio (Dashboard Links) */
+.wd-my-account-links {
+    margin-top: 30px !important;
+    border: none !important;
+}
+
+.wd-my-account-links li {
+    background: #ffffff !important;
+    border-radius: 20px !important; /* Bordes bien redondeados */
+    box-shadow: var(--nuna-shadow) !important;
+    border: 2px solid transparent !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden;
+}
+
+.wd-my-account-links li a {
+    padding: 35px 20px !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Iconos de las tarjetas */
+.wd-my-account-links li .wd-nav-icon {
+    color: var(--nuna-cyan) !important;
+    font-size: 38px !important;
+    margin-bottom: 15px !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Textos de las tarjetas */
+.wd-my-account-links li .nav-link-text {
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    color: #444 !important;
+    transition: color 0.3s !important;
+}
+
+/* 5. Efectos Hover en las Tarjetas (¡La magia visual!) */
+.wd-my-account-links li:hover {
+    transform: translateY(-8px) !important; /* La tarjeta flota hacia arriba */
+    box-shadow: var(--nuna-shadow-hover) !important; /* Sombra turquesa suave */
+    border-color: var(--nuna-cyan-light) !important;
+}
+
+.wd-my-account-links li:hover .wd-nav-icon {
+    transform: scale(1.15) translateY(-5px); /* El icono crece y sube un poco */
+    color: var(--nuna-orange) !important; /* Cambia a naranja Nunatura */
+}
+
+.wd-my-account-links li:hover .nav-link-text {
+    color: var(--nuna-cyan) !important;
+}
+
+/* Asegurar que los pseudo-elementos (iconos de fuente) hereden el color animado */
+.wd-my-account-links li .wd-nav-icon::before {
+    transition: color 0.3s ease;
+}
+
+/* ====================================================
+   6. RESPONSIVIDAD PARA PANTALLAS GRANDES (>= 1920px)
+   ==================================================== */
+
+@media (min-width: 1920px) {
+    
+    /* Textos de Bienvenida (De 16px a 20px) */
+    .woocommerce-MyAccount-content p {
+        font-size: 20px !important;
+    }
+
+    /* Textos de las tarjetas (De 15px a 19px) */
+    .wd-my-account-links li .nav-link-text {
+        font-size: 19px !important;
+    }
+
+    /* Enlaces del menú lateral (Asumiendo 14px nativos de Woodmart, suben a 18px) */
+    .wd-my-account-sidebar .woocommerce-MyAccount-navigation-link a {
+        font-size: 18px !important;
+    }
+
+    /* Título principal "Mi cuenta" (Sube en proporción para no perder jerarquía) */
+    .woocommerce-MyAccount-title {
+        font-size: 32px !important; 
+    }
+
+    /* Opcional: El icono de las tarjetas (De 38px a 44px) 
+       Para que no se vea pequeñito junto al texto que acaba de crecer */
+    .wd-my-account-links li .wd-nav-icon {
+        font-size: 44px !important; 
+    }
+}
+
+/* Fin estilos de dashboard*/
+
+/* ====================================================
+   7. TABLA DE PEDIDOS (WOOCOMMERCE ORDERS) - UI/UX
+   ==================================================== */
+
+/* Contenedor principal de la tabla */
+body.woocommerce-account table.woocommerce-orders-table {
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    overflow: hidden !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+}
+
+/* Encabezados de la tabla (UI limpia y corporativa) */
+body.woocommerce-account table.woocommerce-orders-table thead th {
+    background-color: var(--nuna-cyan-light) !important;
+    color: var(--nuna-cyan) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+    padding: 22px 20px !important;
+    border: none !important;
+    text-align: left !important;
+}
+
+/* Celdas del cuerpo */
+body.woocommerce-account table.woocommerce-orders-table tbody th,
+body.woocommerce-account table.woocommerce-orders-table tbody td {
+    padding: 20px !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+    color: #555 !important;
+    vertical-align: middle !important;
+    font-size: 15px !important;
+    background-color: transparent !important;
+    transition: background-color 0.3s ease !important;
+}
+
+/* Quitar la línea divisoria al último pedido */
+body.woocommerce-account table.woocommerce-orders-table tbody tr:last-child th,
+body.woocommerce-account table.woocommerce-orders-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* Efecto Hover sutil en toda la fila */
+body.woocommerce-account table.woocommerce-orders-table tbody tr:hover th,
+body.woocommerce-account table.woocommerce-orders-table tbody tr:hover td {
+    background-color: rgba(0, 194, 199, 0.03) !important;
+}
+
+/* 8. ELEMENTOS INTERNOS DE LA TABLA */
+
+/* Píldora para el número de pedido */
+body.woocommerce-account table.woocommerce-orders-table .woocommerce-orders-table__cell-order-number a {
+    color: var(--nuna-cyan) !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    background: var(--nuna-cyan-light) !important;
+    padding: 6px 14px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    display: inline-block;
+}
+
+body.woocommerce-account table.woocommerce-orders-table .woocommerce-orders-table__cell-order-number a:hover {
+    background: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--nuna-cyan-light) !important;
+}
+
+/* Resaltar el Total */
+body.woocommerce-account table.woocommerce-orders-table .woocommerce-Price-amount {
+    font-weight: 700 !important;
+    color: #333 !important;
+}
+
+/* Botón "Ver" (Píldora outline que se rellena al hover) */
+body.woocommerce-account table.woocommerce-orders-table .woocommerce-button.view {
+    background-color: transparent !important;
+    color: var(--nuna-cyan) !important;
+    border: 2px solid var(--nuna-cyan) !important;
+    border-radius: 9999px !important;
+    padding: 8px 24px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    text-transform: none !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none !important;
+    display: inline-block !important;
+}
+
+body.woocommerce-account table.woocommerce-orders-table .woocommerce-button.view:hover {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px var(--nuna-cyan-light) !important;
+}
+
+/* 9. RESPONSIVIDAD (MOBILE & PANTALLAS GRANDES) */
+
+/* Optimización móvil: Convertir filas de la tabla en Tarjetas (Cards) individuales */
+@media (max-width: 768px) {
+    body.woocommerce-account table.woocommerce-orders-table {
+        background: transparent !important;
+        box-shadow: none !important;
+        margin-top: 0 !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table thead {
+        display: none !important; /* Escondemos los títulos en móvil */
+    }
+    body.woocommerce-account table.woocommerce-orders-table tbody tr {
+        display: block !important;
+        background: #ffffff !important;
+        border-radius: 20px !important;
+        box-shadow: var(--nuna-shadow) !important;
+        margin-bottom: 20px !important;
+        padding: 15px 10px !important;
+        border: 2px solid transparent !important;
+        transition: all 0.3s ease !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table tbody tr:hover {
+        border-color: var(--nuna-cyan-light) !important;
+        transform: translateY(-4px) !important;
+        box-shadow: var(--nuna-shadow-hover) !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table tbody td,
+    body.woocommerce-account table.woocommerce-orders-table tbody th {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 12px 10px !important;
+        text-align: right !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table tbody td::before,
+    body.woocommerce-account table.woocommerce-orders-table tbody th::before {
+        font-weight: 700 !important;
+        color: var(--nuna-cyan) !important;
+        font-size: 13px !important;
+        text-transform: uppercase !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table .woocommerce-button.view {
+        width: 100% !important;
+        text-align: center !important;
+        margin-top: 15px !important;
+    }
+}
+
+/* Pantallas ultrawide (1920px+) */
+@media (min-width: 1920px) {
+    body.woocommerce-account table.woocommerce-orders-table thead th {
+        font-size: 16px !important;
+        padding: 26px !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table tbody th,
+    body.woocommerce-account table.woocommerce-orders-table tbody td {
+        font-size: 17px !important;
+        padding: 26px !important;
+    }
+    body.woocommerce-account table.woocommerce-orders-table .woocommerce-button.view {
+        font-size: 16px !important;
+        padding: 12px 30px !important;
+    }
+}
+
+
+/* ====================================================
+   10. VISTA DE PEDIDO INDIVIDUAL (ORDER DETAILS) UI/UX
+   ==================================================== */
+
+/* Resaltar los datos clave (Etiquetas en el texto introductorio) */
+body.woocommerce-account .woocommerce-MyAccount-content > p mark {
+    background-color: var(--nuna-cyan-light) !important;
+    color: var(--nuna-cyan) !important;
+    padding: 4px 12px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    display: inline-block;
+    margin: 0 2px;
+}
+
+/* Títulos de las secciones (Detalles del pedido, Dirección) */
+body.woocommerce-account .woocommerce-order-details__title,
+body.woocommerce-account .woocommerce-column__title {
+    font-size: 22px !important;
+    color: #333 !important;
+    margin-top: 40px !important;
+    margin-bottom: 25px !important;
+    font-weight: 700 !important;
+    position: relative;
+    padding-bottom: 12px !important;
+}
+
+/* Subrayado turquesa para los títulos */
+body.woocommerce-account .woocommerce-order-details__title::after,
+body.woocommerce-account .woocommerce-column__title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--nuna-cyan);
+    border-radius: 3px;
+}
+
+/* ====================================================
+   11. TABLAS DE DETALLES (PRODUCTOS Y CAMPOS PERSONALIZADOS)
+   ==================================================== */
+
+body.woocommerce-account table.woocommerce-table {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    border: none !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    margin-bottom: 30px !important;
+    overflow: hidden !important;
+}
+
+/* Encabezados de la tabla de productos */
+body.woocommerce-account table.woocommerce-table thead th {
+    background-color: var(--nuna-cyan-light) !important;
+    color: var(--nuna-cyan) !important;
+    text-transform: uppercase !important;
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+    padding: 20px 25px !important;
+    border: none !important;
+}
+
+/* Celdas generales */
+body.woocommerce-account table.woocommerce-table tbody th,
+body.woocommerce-account table.woocommerce-table tbody td,
+body.woocommerce-account table.woocommerce-table tfoot th,
+body.woocommerce-account table.woocommerce-table tfoot td {
+    padding: 18px 25px !important;
+    border-top: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+    color: #555 !important;
+    vertical-align: middle !important;
+}
+
+/* Enlace del producto (Hover al naranja) */
+body.woocommerce-account table.woocommerce-table td.product-name a {
+    color: #333 !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: color 0.3s ease !important;
+}
+
+body.woocommerce-account table.woocommerce-table td.product-name a:hover {
+    color: var(--nuna-orange) !important;
+}
+
+body.woocommerce-account table.woocommerce-table td.product-name strong {
+    color: var(--nuna-cyan) !important;
+}
+
+/* Footer de la tabla (Subtotal, Envío, Total) */
+body.woocommerce-account table.woocommerce-table tfoot th {
+    text-align: right !important;
+    font-weight: 600 !important;
+    color: #444 !important;
+}
+
+body.woocommerce-account table.woocommerce-table tfoot td {
+    text-align: right !important; /* Alinear montos a la derecha */
+}
+
+/* Fila final: TOTAL (Destacado) */
+body.woocommerce-account table.woocommerce-table tfoot tr:last-child th,
+body.woocommerce-account table.woocommerce-table tfoot tr:last-child td {
+    background-color: rgba(0, 194, 199, 0.03) !important;
+    border-bottom: none !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: var(--nuna-cyan) !important;
+}
+
+/* ====================================================
+   12. TARJETA DE DIRECCIÓN (BILLING ADDRESS)
+   ==================================================== */
+
+body.woocommerce-account address {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    padding: 30px !important;
+    font-style: normal !important;
+    line-height: 1.8 !important;
+    color: #666 !important;
+    border: 2px solid transparent !important;
+    transition: all 0.4s ease !important;
+    position: relative;
+    overflow: hidden;
+}
+
+body.woocommerce-account address:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: var(--nuna-shadow-hover) !important;
+    border-color: var(--nuna-cyan-light) !important;
+}
+
+/* Destacar nombre y teléfono/email en la dirección */
+body.woocommerce-account address p {
+    margin: 10px 0 0 0 !important;
+    color: #333 !important;
+    font-weight: 600 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ====================================================
+   13. RESPONSIVIDAD (MOBILE & PANTALLAS GRANDES)
+   ==================================================== */
+
+@media (max-width: 768px) {
+    /* Ajustes móviles para que los textos no se desborden */
+    body.woocommerce-account table.woocommerce-table tfoot th,
+    body.woocommerce-account table.woocommerce-table tfoot td {
+        display: block !important;
+        text-align: left !important;
+        padding: 10px 20px !important;
+    }
+    body.woocommerce-account table.woocommerce-table tfoot th {
+        padding-bottom: 0 !important;
+        font-size: 13px !important;
+        color: var(--nuna-cyan) !important;
+    }
+    body.woocommerce-account table.woocommerce-table tfoot tr:last-child th,
+    body.woocommerce-account table.woocommerce-table tfoot tr:last-child td {
+        text-align: left !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    body.woocommerce-account .woocommerce-order-details__title,
+    body.woocommerce-account .woocommerce-column__title {
+        font-size: 26px !important;
+    }
+    body.woocommerce-account table.woocommerce-table th,
+    body.woocommerce-account table.woocommerce-table td {
+        font-size: 17px !important;
+        padding: 24px 30px !important;
+    }
+    body.woocommerce-account address {
+        font-size: 18px !important;
+        padding: 40px !important;
+    }
+}
+
+#billing_country_field{
+    display: none!important;
+}
+
+
+/* ====================================================
+   14. FORMULARIO DE EDITAR CUENTA (UI/UX)
+   ==================================================== */
+
+/* Contenedor de las cajas de texto (Inputs) */
+body.woocommerce-account .woocommerce-EditAccountForm .input-text {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important; /* Borde gris muy sutil */
+    background-color: #f9fbfc !important; /* Fondo casi blanco/azulado */
+    padding: 16px 20px !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Efecto Focus (Cuando el usuario hace clic para escribir) */
+body.woocommerce-account .woocommerce-EditAccountForm .input-text:focus {
+    background-color: #ffffff !important;
+    border-color: var(--nuna-cyan) !important;
+    box-shadow: 0 0 0 4px var(--nuna-cyan-light) !important;
+    outline: none !important;
+}
+
+/* Etiquetas (Labels) de los campos */
+body.woocommerce-account .woocommerce-EditAccountForm label {
+    font-weight: 600 !important;
+    color: #444 !important;
+    margin-bottom: 10px !important;
+    display: block !important;
+    font-size: 15px !important;
+}
+
+/* Asterisco de campo obligatorio (Naranja Nunatura) */
+body.woocommerce-account .woocommerce-EditAccountForm label .required {
+    color: var(--nuna-orange) !important;
+    text-decoration: none !important;
+    font-weight: 800 !important;
+}
+
+/* Textos de ayuda / Descripción (ej. "Así será como se mostrará...") */
+body.woocommerce-account .woocommerce-EditAccountForm em,
+body.woocommerce-account .woocommerce-EditAccountForm span[id*="description"] {
+    font-size: 13px !important;
+    color: #888 !important;
+    display: block !important;
+    margin-top: 8px !important;
+    font-style: normal !important;
+    line-height: 1.5 !important;
+}
+
+/* ====================================================
+   15. SECCIÓN DE CAMBIO DE CONTRASEÑA (TARJETA)
+   ==================================================== */
+
+body.woocommerce-account .woocommerce-EditAccountForm fieldset {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.04) !important;
+    border-radius: 20px !important;
+    padding: 35px 30px !important;
+    margin-top: 40px !important;
+    margin-bottom: 30px !important;
+    box-shadow: var(--nuna-shadow) !important;
+}
+
+/* Título de la tarjeta de contraseña */
+body.woocommerce-account .woocommerce-EditAccountForm fieldset legend {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: var(--nuna-cyan) !important;
+    padding: 0 15px !important;
+    margin-bottom: 15px !important;
+    background: transparent !important;
+    text-transform: none !important;
+}
+
+/* Separación entre los campos de contraseña */
+body.woocommerce-account .woocommerce-EditAccountForm fieldset .form-row {
+    margin-bottom: 20px !important;
+}
+
+/* ====================================================
+   16. BOTÓN "GUARDAR CAMBIOS"
+   ==================================================== */
+
+body.woocommerce-account .woocommerce-EditAccountForm .woocommerce-Button {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important; /* Forma de píldora */
+    padding: 16px 45px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    border: none !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 6px 20px var(--nuna-cyan-light) !important;
+    margin-top: 10px !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+}
+
+/* Efecto hover interactivo: cambia al naranja de Nunatura */
+body.woocommerce-account .woocommerce-EditAccountForm .woocommerce-Button:hover {
+    background-color: var(--nuna-orange) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 25px rgba(240, 125, 0, 0.2) !important; /* Resplandor naranja */
+}
+
+/* ====================================================
+   17. RESPONSIVIDAD (MOBILE & PANTALLAS GRANDES)
+   ==================================================== */
+
+@media (max-width: 768px) {
+    body.woocommerce-account .woocommerce-EditAccountForm fieldset {
+        padding: 25px 15px !important;
+    }
+    body.woocommerce-account .woocommerce-EditAccountForm .woocommerce-Button {
+        width: 100% !important; /* Botón ancho completo en móviles */
+        text-align: center !important;
+    }
+}
+
+/* Para pantallas ultrawide (1920px+) -> Añadimos 4px como pediste */
+@media (min-width: 1920px) {
+    body.woocommerce-account .woocommerce-EditAccountForm .input-text {
+        padding: 20px 24px !important;
+        font-size: 19px !important;
+    }
+    body.woocommerce-account .woocommerce-EditAccountForm label {
+        font-size: 19px !important;
+    }
+    body.woocommerce-account .woocommerce-EditAccountForm fieldset legend {
+        font-size: 24px !important;
+    }
+    body.woocommerce-account .woocommerce-EditAccountForm .woocommerce-Button {
+        font-size: 20px !important;
+        padding: 20px 55px !important;
+    }
+    body.woocommerce-account .woocommerce-EditAccountForm em,
+    body.woocommerce-account .woocommerce-EditAccountForm span[id*="description"] {
+        font-size: 17px !important;
+    }
+}
+
+/* ====================================================
+   24. FORMULARIO DE EDITAR DIRECCIÓN (MI CUENTA)
+   ==================================================== */
+
+/* Titular ("Dirección de facturación") */
+body.woocommerce-account form > h2 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    margin-top: 20px !important;
+    margin-bottom: 25px !important;
+    position: relative;
+    padding-bottom: 12px !important;
+    font-family: 'Poppins', sans-serif !important;
+}
+
+body.woocommerce-account form > h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--nuna-cyan);
+    border-radius: 3px;
+}
+
+/* Etiquetas (Labels) y asteriscos */
+body.woocommerce-account .woocommerce-address-fields label {
+    font-weight: 600 !important;
+    color: #444 !important;
+    font-size: 15px !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+body.woocommerce-account .woocommerce-address-fields label .required {
+    color: var(--nuna-orange) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+/* 1. CAJAS DE TEXTO NORMALES (Inputs) */
+body.woocommerce-account .woocommerce-address-fields .input-text {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important;
+    background-color: #f9fbfc !important;
+    padding: 0 20px !important;
+    min-height: 35px !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* 2. SELECTORES DESPLEGABLES (Select2) */
+body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important;
+    background-color: #f9fbfc !important;
+    height: 45px !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Centrado vertical seguro del texto en Select2 */
+body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 40px !important; /* Centra el texto calculando los bordes */
+    padding-left: 20px !important;
+    padding-right: 40px !important;
+    color: #555 !important;
+}
+
+body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single .select2-selection__arrow {
+    height: 48px !important;
+    right: 10px !important;
+}
+
+/* Efecto Focus (Click turquesa para Inputs y Select2) */
+body.woocommerce-account .woocommerce-address-fields .input-text:focus,
+body.woocommerce-account .woocommerce-address-fields .select2-container--focus .select2-selection--single,
+body.woocommerce-account .woocommerce-address-fields .select2-container--open .select2-selection--single {
+    background-color: #ffffff !important;
+    border-color: var(--nuna-cyan) !important;
+    box-shadow: 0 0 0 4px var(--nuna-cyan-light) !important;
+    outline: none !important;
+}
+
+/* ====================================================
+   25. BOTÓN "GUARDAR DIRECCIÓN"
+   ==================================================== */
+
+body.woocommerce-account .woocommerce-address-fields .button {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important; /* Efecto Píldora */
+    padding: 16px 45px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    border: none !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 6px 20px var(--nuna-cyan-light) !important;
+    margin-top: 20px !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+}
+
+/* Efecto Hover interactivo */
+body.woocommerce-account .woocommerce-address-fields .button:hover {
+    background-color: var(--nuna-orange) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 25px rgba(240, 125, 0, 0.2) !important;
+}
+
+/* ====================================================
+   26. RESPONSIVIDAD (MOBILE & PANTALLAS GRANDES)
+   ==================================================== */
+
+@media (max-width: 768px) {
+    /* Botón ancho completo en móviles */
+    body.woocommerce-account .woocommerce-address-fields .button {
+        width: 100% !important;
+        text-align: center !important;
+    }
+}
+
+/* Pantallas Ultrawide (1920px+) */
+@media (min-width: 1920px) {
+    body.woocommerce-account form > h2 {
+        font-size: 26px !important;
+    }
+    body.woocommerce-account .woocommerce-address-fields label,
+    body.woocommerce-account .woocommerce-address-fields .input-text,
+    body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single {
+        font-size: 19px !important;
+    }
+    body.woocommerce-account .woocommerce-address-fields .input-text,
+    body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single {
+        min-height: 60px !important;
+        height: 60px !important;
+    }
+    body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single .select2-selection__rendered {
+        line-height: 56px !important;
+    }
+    body.woocommerce-account .woocommerce-address-fields .select2-container .select2-selection--single .select2-selection__arrow {
+        height: 56px !important;
+    }
+    body.woocommerce-account .woocommerce-address-fields .button {
+        font-size: 20px !important;
+        padding: 20px 55px !important;
+    }
+}
+
+
+/* ====================================================
+   18. VARIABLES Y TITULARES (SOLO FORMULARIO CHECKOUT)
+   ==================================================== */
+
+#customer_details {
+    --nuna-cyan: #00C2C7;
+    --nuna-orange: #F07D00;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+}
+
+/* Titulares ("Información de compra", etc.) dentro del formulario */
+#customer_details h3 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    padding-bottom: 12px !important;
+    border-bottom: none !important;
+    font-family: 'Poppins', sans-serif !important;
+}
+
+#customer_details h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--nuna-cyan);
+    border-radius: 3px;
+}
+
+/* ====================================================
+   19. CAMPOS DEL FORMULARIO Y SELECTORES
+   ==================================================== */
+
+/* Etiquetas (Labels) de los campos */
+#customer_details label {
+    font-weight: 600 !important;
+    color: #444 !important;
+    font-size: 15px !important;
+    margin-bottom: 8px !important;
+    
+}
+
+/* Asterisco de obligatorio */
+#customer_details label .required {
+    color: var(--nuna-orange) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+/* Cajas de texto y selectores desplegables (Select2) */
+#customer_details .input-text,
+#customer_details .select2-container .select2-selection--single {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important;
+    background-color: #f9fbfc !important;
+    padding: 0 20px !important;
+    min-height: 45px !important; /* Altura uniforme para armonía visual */
+    display: flex !important;
+    align-items: center !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Ajuste específico para centrar el texto interno de la lista desplegable */
+#customer_details .select2-container .select2-selection--single .select2-selection__rendered {
+    padding: 0 !important;
+    color: #555 !important;
+}
+
+/* Efecto Focus (Cuando el usuario hace clic para escribir o seleccionar) */
+#customer_details .input-text:focus,
+#customer_details .select2-container--focus .select2-selection--single,
+#customer_details .select2-container--open .select2-selection--single {
+    background-color: #ffffff !important;
+    border-color: var(--nuna-cyan) !important;
+    box-shadow: 0 0 0 4px var(--nuna-cyan-light) !important;
+    outline: none !important;
+}
+
+/* ====================================================
+   20. RESPONSIVIDAD PANTALLAS GRANDES (>= 1920px) 
+   ==================================================== */
+
+@media (min-width: 1920px) {
+    #customer_details h3 {
+        font-size: 26px !important;
+    }
+    #customer_details label,
+    #customer_details .input-text,
+    #customer_details .select2-container .select2-selection--single {
+        font-size: 19px !important;
+    }
+    #customer_details .input-text,
+    #customer_details .select2-container .select2-selection--single {
+        min-height: 55px !important; /* Cajas más altas para pantallas grandes */
+        padding: 0 24px !important;
+    }
+}

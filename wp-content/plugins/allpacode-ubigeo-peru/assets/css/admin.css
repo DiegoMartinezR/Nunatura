@@ -1,0 +1,88 @@
+.allpacode-ubigeo-admin {
+	max-width: none;
+	padding: 28px 32px 48px;
+	background: #f5f7fb;
+}
+
+.allpacode-ubigeo-admin__hero,
+.allpacode-ubigeo-admin__panel,
+.allpacode-ubigeo-admin__stats > div {
+	background: #fff;
+	border: 1px solid #e6eaf0;
+	border-radius: 14px;
+	box-shadow: 0 14px 34px rgba(15, 23, 42, .055);
+}
+
+.allpacode-ubigeo-admin__hero {
+	padding: 30px 32px;
+	margin-bottom: 18px;
+	background: linear-gradient(135deg, #fff, #f4f8ff);
+}
+
+.allpacode-ubigeo-admin__hero span {
+	display: inline-flex;
+	padding: 4px 9px;
+	border-radius: 999px;
+	background: #dbeafe;
+	color: #1d4ed8;
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+
+.allpacode-ubigeo-admin__hero h1 {
+	margin: 8px 0;
+	font-size: 30px;
+	font-weight: 800;
+}
+
+.allpacode-ubigeo-admin__hero p {
+	margin: 0;
+	color: #667085;
+}
+
+.allpacode-ubigeo-admin__stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+	margin-bottom: 18px;
+}
+
+.allpacode-ubigeo-admin__stats > div,
+.allpacode-ubigeo-admin__panel {
+	padding: 22px;
+}
+
+.allpacode-ubigeo-admin__stats strong {
+	display: block;
+	font-size: 34px;
+}
+
+.allpacode-ubigeo-admin__stats span,
+.allpacode-ubigeo-admin small {
+	color: #667085;
+}
+
+.allpacode-ubigeo-admin__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.allpacode-ubigeo-admin label {
+	display: grid;
+	gap: 7px;
+	font-weight: 700;
+}
+
+.allpacode-ubigeo-admin select {
+	width: 100%;
+	max-width: 100%;
+}
+
+@media (max-width: 782px) {
+	.allpacode-ubigeo-admin__stats,
+	.allpacode-ubigeo-admin__grid {
+		grid-template-columns: 1fr;
+	}
+}

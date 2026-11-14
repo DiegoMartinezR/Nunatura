@@ -1,0 +1,1461 @@
+/* Si Woodmart se ve mal, comenta la línea de 'base' */
+@tailwind base; 
+@tailwind components;
+@tailwind utilities;
+
+/* Tus capas personalizadas */
+@layer components {
+}
+
+@layer base {
+    @font-face {
+        font-family: 'amnesty';
+        src: url('../assets/fonts/amnesty.woff2') format('woff2'),
+             url('../assets/fonts/amnesty.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+    }
+}
+
+/******** Inicio estilos para páginas ********/
+
+.page-template-homepage #main-content, 
+.page-template #main-content, 
+.single #main-content, 
+.author #main-content, 
+.post-type-archive-product #main-content, 
+.tax-product_cat #main-content, 
+.single-product #main-content
+{
+    padding: 0 !important;
+}
+
+.blog #main-content, 
+.tag #main-content, 
+.category #main-content, 
+.search #main-content, 
+.author #main-content, 
+.post-type-archive-product #main-content .site-content, 
+.tax-product_cat #main-content .site-content
+{
+    padding: 48px 5% 50px 5% !important;
+}
+
+@media (min-width: 1280px) {
+    .blog #main-content, 
+    .tag #main-content, 
+    .category #main-content, 
+    .search #main-content, 
+    .author #main-content, 
+    .post-type-archive-product #main-content .site-content, 
+    .tax-product_cat #main-content .site-content{
+        padding: 52px 7% 0px 7% !important;
+    }
+}
+
+.single-product #main-content .site-content {
+    padding: 48px 0px 0px 0px !important;
+}
+
+.single-product #main-content .site-content .related-and-upsells{
+    padding: 0px 3% 50px 3% !important;
+}
+
+.single-product #main-content .product-image-summary-wrap {
+        padding: 0px 2% 0px 2% !important;
+    }
+
+    
+.woocommerce-cart #main-content, .woocommerce-checkout #main-content, .woocommerce-account #main-content, .page-id-1274 #main-content {
+    padding: 48px 5% 48px 5% !important;
+}
+
+@media (min-width: 1280px) {
+    .single-product #main-content .product-image-summary-wrap {
+        padding: 0px 5% 0px 5% !important;
+    }
+
+    .single-product #main-content .site-content .related-and-upsells{
+        padding: 25px 7% 50px 7% !important;
+    }
+
+    .woocommerce-cart #main-content, .woocommerce-checkout #main-content, .woocommerce-account #main-content, .page-id-1274 #main-content  {
+        padding: 60px 6% 60px 6% !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .single-product #main-content .product-image-summary-wrap {
+        padding: 0px 7% 0px 7% !important;
+    }
+
+    .single-product #main-content .site-content .related-and-upsells{
+        padding: 30px 9% 60px 9% !important;
+    }
+
+    .woocommerce-cart #main-content, .woocommerce-checkout #main-content, .woocommerce-account #main-content, .page-id-1274 #main-content {
+        padding: 60px 8% 60px 8% !important;
+    }
+}
+
+.single-post .site-content{
+    padding: 0px 0px 50px 0px !important;
+}
+
+/******** Fin estilos para páginas ********/
+
+/******** Inicio estilos para header ********/
+
+@media (min-width: 768px) {
+    .whb-general-header-inner {
+        padding: 0 5% !important;
+    }
+
+    .whb-header-bottom-inner {
+        padding: 0 6% !important;
+    }
+}
+
+.wd-header-nav, .site-logo {
+    padding: 0px !important;
+}
+
+.wd-logo img{
+    padding: 10px 0 !important;
+}
+
+.wd-tools-element:is(.wd-design-2,.wd-design-5) .wd-tools-count {
+    background: #005656 !important;
+    font-size: 11px !important;
+}
+
+.wd-tools-count{
+    padding-top: 0.5px !important;
+}
+
+.wd-tools-icon{
+    color: #22bcb9 !important;
+}
+
+/******** Fin estilos para header ********/
+
+/******** Inicio estilos para footer ********/
+
+.main-footer{
+    padding: 0 !important;
+}
+
+/******** Fin estilos para footer ********/
+
+/******** Inicio estilos para Blog ********/
+article.not-found:before{
+    color: #22bcb9 !important;
+}
+
+.wd-blog-element{
+    padding-left: 0% !important;
+}
+
+.wd-blog-element .wd-grid-g{
+    gap: 40px !important;
+}
+
+@media (min-width: 1024px) {
+    .wd-blog-element .wd-grid-g{
+    gap: 50px !important;
+    }
+
+   .wd-blog-element{
+    padding-left: 5% !important;
+    }
+}
+
+.wd-posts article {
+    padding: 18px !important;
+    border-radius: 20px !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+}
+
+.blog-design-masonry.blog-style-bg .wd-post-content {
+    background: transparent !important;
+}
+
+.blog-design-masonry.wd-add-shadow .wd-post-inner{
+    box-shadow: none !important;
+}
+
+.wd-post-img a{
+    border-radius: 15px !important;
+    overflow: hidden !important;
+}
+
+.wd-post-img{
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    transform: scale(1); 
+}
+
+.wd-post-img img:hover{
+    overflow: hidden !important;
+    transform: scale(1); 
+}
+
+.blog-style-bg .wd-post-content{
+    padding: 30px 18px 18px 18px !important;
+}
+
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;           /* Espacio entre etiquetas */
+    margin-bottom: 8px; /* Espacio entre las etiquetas y el título */
+}
+
+/* Estilo para cada etiqueta individual */
+.card-tags a {
+    background-color: #f3f4f6; /* Fondo gris claro */
+    color: #4b5563 !important;;            /* Color del texto */
+    font-size: 0.75rem;        /* Texto pequeño */
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;        /* Bordes redondeados */
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+
+.card-tags a:empty {
+    display: none !important;
+}
+
+/* Por si acaso tiene un espacio invisible dentro */
+.card-tags a:blank {
+    display: none !important;
+}
+
+.wd-post-title{
+    width: 100% !important;
+    text-align: left !important;
+    color: #fff !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}
+
+@media (min-width: 1920px) {
+    .wd-post-title{
+     font-size: 22px !important;
+    }
+
+    .wd-posts article {
+        max-width: 400px !important;
+    }
+
+    .wd-post-excerpt{
+      font-size: 18px !important;
+    }
+}
+
+.wd-post-excerpt{
+    width: 100% !important;
+    text-align: left !important;
+    color: #fff !important;
+}
+
+.wd-posts article:nth-child(6n+1),
+.wd-posts article:nth-child(6n+4),
+.wd-posts article:nth-child(6n+5) {
+    background-color: #F87612 !important; 
+}
+
+/* --- BLOQUE VERDE (Posiciones 2, 3, 6...) --- */
+.wd-posts article:nth-child(6n+2),
+.wd-posts article:nth-child(6n+3),
+.wd-posts article:nth-child(6n+6) {
+    background-color: #0cc !important; 
+}
+
+.wp-block-categories-list li{
+    margin-bottom: 8px !important;
+}
+
+
+/* 2. Estilizamos el contenedor interno para que tenga los bordes redondeados y el color cian */
+.wp-block-search .wp-block-search__inside-wrapper {
+    border: 3px solid #00cbd1 !important; /* El color cian de tu imagen */
+    border-radius: 50px !important;       /* Hace la barra completamente ovalada */
+    padding: 5px 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    background-color: #ffffff !important;
+    overflow: hidden !important;
+}
+
+/* 3. Estilo para el campo de texto (input) donde escribe el usuario */
+.wp-block-search .wp-block-search__input {
+    border: none !important;              /* Quitamos los bordes internos */
+    outline: none !important;             /* Quitamos la línea de enfoque por defecto */
+    font-size: 16px !important;
+    width: 100% !important;
+    background: transparent !important;
+}
+
+/* 4. Convertimos el botón de texto "Buscar" en el icono de la lupa */
+.wp-block-search .wp-block-search__button {
+    background: transparent !important;   /* Quitamos el fondo gris */
+    border: none !important;
+    color: transparent !important;        /* Escondemos la palabra "Buscar" */
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    position: relative !important;
+    min-width: 30px !important;
+    min-height: 0px !important;
+    border-bottom: 0px !important;
+    box-shadow: none !important;
+}
+
+/* 5. Dibujamos la lupa usando CSS puro sobre el botón */
+.wp-block-search .wp-block-search__button::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border: 3px solid #00cbd1;            /* El círculo de la lupa */
+    border-radius: 50%;
+}
+
+.wp-block-search .wp-block-search__button::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 17px;
+    left: 17px;
+    width: 8px;
+    height: 3px;
+    background-color: #00cbd1;           /* El palito de la lupa */
+    transform: rotate(45deg);            /* Inclinación */
+    transform-origin: top left;
+}
+
+.widget-area .widget_search{
+    padding-bottom: 0px !important;
+     border-bottom: 0px !important;
+}
+
+.widget-area .widget_search form{
+    border-bottom: 0px !important;
+}
+
+.wp-block-search__button-outside label{
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+
+/******** Fin de estilos para Blog ********/
+
+/******** Inicio de estilos para Post Detail ********/
+
+.single .wd-single-post-header{
+    margin-bottom: 0 !important;
+}
+
+.single .wd-single-footer{
+    margin-bottom: 0 !important;
+}
+
+
+.wd-post-meta img{
+    display: none !important;
+}
+
+.wd-post-meta .author{
+   padding-left: 5px !important;
+}
+
+.wd-single-footer{
+    padding: 0 5% 0px 5% !important;
+}
+
+.single-post .wd-tags-list{
+    display: none !important;
+}
+
+.wd-single-post-header .wd-post-image img{
+    height: auto !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    max-height: 550px !important;
+}
+
+.wd-post-image{
+    height: auto !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    max-height: 550px !important;
+
+}
+
+#comments{
+    display: none!important;
+}
+
+/******** Fin de estilos para Post Detail ********/
+
+
+/******** Inicio de estilos para Card Product ********/
+
+.wd-product .wd-entities-title{
+    color: #0cc !important;
+    font-weight : 600 !important;
+    font-size: 16px !important;
+    font-family: 'poppins', sans-serif !important;
+}
+
+.wd-product .wd-entities-title a:hover{
+    color: #0cc !important;
+}
+
+.price .amount{
+    color: #007070 !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    font-family: 'poppins', sans-serif !important;
+}
+
+
+.add_to_cart_button, .add-to-cart-loop{
+    border-color: #0cc !important;
+    background-color: #0cc  !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    border-radius: 40px !important;
+    text-transform: none !important;
+    padding: 0px 10px !important;
+    font-family: 'poppins', sans-serif !important;
+    font-size: 12px !important;
+}
+
+@media (min-width: 1024px) {
+   .wd-product .wd-entities-title{
+    font-size: 18px !important;
+    }
+
+    .price .amount{
+    color: #007070 !important;
+    font-weight: 600 !important;
+    font-size: 18px !important;
+    }
+
+    .add_to_cart_button, .add-to-cart-loop{
+    font-size: 14px !important;
+    padding: 4px 10px !important;
+    }
+}
+
+
+@media (min-width: 1920px) {
+   .wd-product .wd-entities-title{
+    font-size: 22px !important;
+    }
+
+    .price .amount{
+    color: #007070 !important;
+    font-weight: 600 !important;
+    font-size: 20px !important;
+    }
+
+    .add_to_cart_button, .add-to-cart-loop{
+    font-size: 16px !important;
+    padding: 5px 10px !important;
+    }
+}
+
+
+
+/******** Fin de estilos para Card Product ********/
+
+
+
+/******** Inicio de estilos para Card Post ********/
+
+.wd-arrow-inner {
+    background-color: #0cc !important;
+    border-radius: 50% !important; 
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 50px !important;  
+    height: 50px !important;
+    padding: 8px!important;
+}
+
+
+.wd-btn-arrow .wd-arrow-inner::after{
+    content: '' !important; 
+    display: block !important;
+    width: 40px !important; 
+    height: 40px !important;
+    background-color: #ffffff !important; 
+    /* Aplicar el SVG como máscara usando la ruta relativa */
+    -webkit-mask-image: url('../assets/svg/flecha.svg') !important;
+    mask-image: url('../assets/svg/flecha.svg') !important;
+    -webkit-mask-size: contain !important;
+    mask-size: contain !important;
+    -webkit-mask-repeat: no-repeat !important;
+    mask-repeat: no-repeat !important;
+    -webkit-mask-position: center !important;
+    mask-position: center !important;
+}
+
+.wd-btn-arrow.wd-prev .wd-arrow-inner::after,
+.wd-btn-arrow.wd-prev .wd-arrow-inner::before {
+    transform: rotate(180deg) !important;
+}
+
+.wd-gallery-thumb .wd-arrow-inner {
+    display: none!important;
+}
+
+.elementor-posts article .elementor-post__card{
+    padding: 15px !important;
+    border-radius: 20px !important;
+    max-width: 380px !important;
+    margin: auto;
+}
+
+.category-grid{
+    --grid-column-gap: 20px!important;
+}
+
+@media (min-width: 1920px) {
+  .elementor-posts article .elementor-post__card{
+    max-width: 420px !important;
+    }
+
+    .category-grid{
+    --grid-column-gap: 100px!important;
+    }
+}
+
+
+article .elementor-post__text{
+    padding: 10px 15px 0px 15px !important;
+}
+
+article .elementor-post__title{
+    margin-bottom: 15px !important;
+}
+
+@media (min-width: 1020px) {
+  article .elementor-post__text{
+    padding: 0px 15px 0px 15px !important;
+}
+}
+
+article .elementor-post__title a{
+    color: #0CC!important;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+@media (min-width: 1280px) {
+  article .elementor-post__title a{
+    font-size: 20px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+  article .elementor-post__title a{
+    font-size: 23px !important;
+    }
+}
+
+.elementor-posts .elementor-post__card .elementor-post__excerpt{
+    margin-bottom: 7px !important;
+}
+
+article .elementor-post__text{
+    margin-top: 10px !important;
+}
+
+article .elementor-post__thumbnail__link{
+    border-radius: 10px !important;
+    overflow: hidden !important;
+}
+
+article .elementor-post__badge{
+    background-color: #F87612 !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-transform: capitalize !important;
+}
+
+/******** Fin de estilos para Card Post ********/
+
+/******** Inicio de estilos para aseccion categorias carrusel home ********/
+
+.wd-show-sidebar-btn, .wd-products-per-page, .wd-products-shop-view, .woocommerce-ordering {
+    display: none !important;
+}
+
+.category-grid-item .wd-entities-title{
+    color: #F87612 !important;
+    font-size: 20px!important;
+}
+
+@media (min-width: 1280px) {
+  .category-grid-item .wd-entities-title{
+    font-size: 24px!important;
+    }
+}
+
+@media (min-width: 1920px) {
+  .category-grid-item .wd-entities-title{
+    font-size: 28px!important;
+    }
+}
+
+.category-grid-item .wd-cat-content{
+    padding: 20px 10px !important
+}
+
+/******** Fin de estilos para aseccion categorias carrusel home ********/
+
+/******** Inicio de estilos para cards productos ********/
+
+.wd-product.wd-hover-button .wd-product-thumb:before, .wd-product.wd-hover-info-alt .wd-product-thumb:before{
+    background-color:   rgba(0,0,0,0.2) !important;
+}
+
+.products .product-grid-item .wd-product-thumb{
+    border-radius: 20px !important;
+    
+}
+
+.wd-product-img-link{
+    border-radius: 20px !important;
+    overflow: auto!important;
+}
+
+.wd-add-btn{
+    margin-top: 12px!important;
+}
+
+.products .product-grid-item .wd-product-wrapper{
+    border-radius: 20px !important;
+    max-width: 380px !important;
+    margin: 0 auto !important;
+    padding: 5%!important;
+}
+
+@media (min-width: 1280px) {
+  .products .product-grid-item .wd-product-wrapper{
+    padding: 5%!important;
+    }
+}
+
+@media (min-width: 1920px) {
+  .products .product-grid-item .wd-product-wrapper{
+    max-width: 450px !important;
+    padding: 6%!important;
+    }
+}
+
+
+
+/******** Fin  de estilos para cards productos ********/
+
+/******** Inicio  de estilos para breadcumb de archivo productos ********/
+
+.wd-breadcrumbs a{
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    font-family: 'poppins', sans-serif !important;
+    color: #777 !important;
+}
+
+.wd-breadcrumbs a:hover{
+ color: #0CC !important;
+}
+
+.wd-breadcrumbs .wd-last-link{
+ font-size: 16px !important;
+ font-weight: 500 !important;
+ font-family: 'poppins', sans-serif !important;
+ color: #777 !important;
+}
+
+
+.wd-breadcrumbs .wd-last-link:hover{
+ color: #0CC !important;
+}
+
+.wd-breadcrumbs .wd-delimiter{
+  margin-inline: 4px !important;
+}
+
+.wd-breadcrumbs .wd-delimiter:after {
+    content: ">" !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #0CC !important;
+}
+
+.wd-breadcrumbs .wd-last{
+ font-size: 16px !important;
+ font-weight: 600 !important;
+ font-family: 'poppins', sans-serif !important;
+ color: #009191 !important;
+}
+
+@media (min-width: 1920px) {
+  .wd-breadcrumbs .wd-last{
+    font-size: 20px !important;
+   }
+
+   .wd-breadcrumbs .wd-last-link{
+    font-size: 20px !important;
+   }
+
+   .wd-breadcrumbs a{
+    font-size: 20px !important;
+   }
+}
+
+/******** Fin  de estilos para breadcumb de archivo productos ********/
+
+/******** Inicio  de estilos para detalle de producto ********/
+
+.product-image-summary .product_title{
+    font-weight: 600 !important;
+    font-family: 'poppins', sans-serif !important;
+}
+
+.product-image-summary .price bdi{
+    font-weight: 600 !important;
+    font-family: 'poppins', sans-serif !important;
+    color: #161616 !important;
+    font-size: 18px !important;
+    letter-spacing: 0.01em !important;
+}
+
+
+.product-image-summary .price del bdi, .price del bdi span{
+    font-size: 17px !important;
+    color: #4A5568 !important;
+}
+
+.woocommerce del {
+    text-decoration-color: #4A5568!important; /* Cambia aquí el color (ej: rojo) */
+    text-decoration-thickness: 1.3px!important; /* Cambia aquí el grosor */
+}
+
+.product-image-summary .woocommerce-product-details__short-description{
+    font-size: 14px !important;
+    color: #161616 !important;
+    font-family: 'poppins', sans-serif !important;
+}
+
+
+@media (min-width: 1024px) {
+   .product-image-summary .summary{
+        padding: 0 5% !important;
+    }
+
+    .product-image-summary .product-images{
+        padding: 0 5% !important;
+    }
+
+    .product-image-summary .product_title{
+        font-size: 26px !important;
+    }
+
+    .product-image-summary .price bdi{
+        font-size: 24px !important;
+    }
+
+    .product-image-summary .woocommerce-product-details__short-description{
+        font-size: 14px !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .product-image-summary .woocommerce-product-details__short-description{
+        font-size: 15px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+  .product-image-summary .summary{
+        padding: 0 8% !important;
+    }
+
+    .product-image-summary .product-images{
+        padding: 0 8% !important;
+    }
+
+    .product-image-summary .product_title{
+        font-size: 30px !important;
+    }
+
+    .product-image-summary .price bdi{
+        font-size: 28px !important;
+    }
+
+    .product-image-summary .woocommerce-product-details__short-description{
+        font-size: 18px !important;
+    }
+}
+
+
+
+
+form.cart {
+    display: flex;
+    align-items: center;
+    gap: 16px; 
+    font-family: 'Poppins', sans-serif; 
+}
+
+
+form.cart .quantity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 2px solid #0cc; /* Color turquesa del borde */
+    border-radius: 50px; /* Bordes completamente redondeados */
+    padding: 6px 16px;
+    min-width: 140px;
+    height: 45px; /* Altura idéntica al botón */
+    box-sizing: border-box;
+    background-color: #ffffff;
+}
+
+
+form.cart .quantity input::-webkit-outer-spin-button,
+form.cart .quantity input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+form.cart .quantity input[type=number] {
+    -moz-appearance: textfield;
+}
+
+
+form.cart .quantity .qty {
+    width: 40px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 0;
+    outline: none;
+}
+
+
+form.cart .quantity .btn {
+    border: none;
+    background: transparent;
+    color: #0cc;
+    font-size: 24px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0 5px;
+    transition: transform 0.2s ease;
+    line-height: 1;
+    
+}
+
+form.cart .quantity .btn:hover {
+    transform: scale(1.15); 
+}
+
+
+
+form.cart .single_add_to_cart_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; 
+    background-color: #00d1ce;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 500;
+    border: none;
+    border-radius: 50px; 
+    padding: 0 32px;
+    height: 45px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: none;
+    text-transform: none!important;
+}
+
+
+form.cart .single_add_to_cart_button:hover {
+    background-color: #00b8b5; 
+}
+
+
+
+form.cart .single_add_to_cart_button::after {
+    content: "";
+    width: 20px;
+    height: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z' /%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    display: inline-block;
+}
+
+div.quantity input[type="button"]:hover{
+    background-color: transparent !important;
+    color: #0CC !important;
+}
+
+.product-tabs-inner{
+    padding: 0px !important;
+}
+
+.product-tabs-wrapper{
+    border: none!important;
+    margin-bottom: 0px !important;
+    padding: 0px!important;
+}
+
+
+.wd-carousel-container.related-products .wd-el-title {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 auto 45px auto !important;
+}
+
+.wd-carousel-container.related-products .wd-el-title span {
+    text-align: center !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: #0CC !important;
+}
+
+@media (min-width: 1280px) {
+    .wd-carousel-container.related-products .wd-el-title span {
+        font-size: 32px !important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .wd-carousel-container.related-products .wd-el-title span {
+        font-size: 40px !important;
+    }
+}
+
+.product-tabs-inner>div:not(:last-child){
+    margin-bottom: 0px !important;
+}
+
+.wd-add-btn, .wd-product.wd-hover-button .wd-add-btn>a{
+    border-radius: 50px !important;
+    overflow: hidden !important;
+}
+
+.wd-swatch{
+    padding: 7px !important;
+}
+
+.close-side-widget .wd-action-text{
+    display: none !important;
+}
+
+.wd-action-btn .wd-action-icon:before{
+    font-weight: 600 !important;
+}
+
+.woocommerce-mini-cart-item .wd-entities-title{
+    color: #161616 !important;
+}
+
+.woocommerce-mini-cart .remove:after{
+    font-weight: 600 !important;
+}
+
+.cart-info .quantity{
+    font-weight: 600 !important;
+    color: #202020 !important;
+}
+
+.woocommerce-mini-cart__buttons a{
+    font-size: 15px !important;
+}
+
+.current-cat{
+    font-weight: 600 !important;
+    color: #161616;
+}
+
+
+/* Inicio Estilos para el Shortcode de Breadcrumbs personalizado */
+
+.woocommerce-breadcrumb.custom-styled-breadcrumbs {
+    font-family: 'Poppins', sans-serif; 
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 1px; 
+    color: #666666; 
+}
+
+/* Estilo para los enlaces de nivel superior (ej. Inicio) */
+.woocommerce-breadcrumb.custom-styled-breadcrumbs a {
+    color: #666666; 
+    text-decoration: none;
+    font-weight: normal;
+}
+
+.woocommerce-breadcrumb.custom-styled-breadcrumbs a:hover {
+    color: #00919e; /* Color turquesa al pasar el mouse */
+}
+
+
+.woocommerce-breadcrumb.custom-styled-breadcrumbs :last-child::before {
+    content: ">"; /* Pintamos la flecha directamente aquí */
+    color: #0cc; /* Color turquesa */
+    font-weight: 700;
+    margin: 0 6px;
+    font-size: 16px;
+    transform: scaleY(1.2); /* Estilizado vertical */
+    display: inline-block;
+}
+/* Estilo para el último elemento (Categoría actual activa) */
+.woocommerce-breadcrumb.custom-styled-breadcrumbs img, 
+.woocommerce-breadcrumb.custom-styled-breadcrumbs span:last-child {
+    color: #00919e; /* Color turquesa */
+    font-weight: bold; /* Texto en negrita */
+}
+
+.shop-loop-head{
+    border-bottom: 2.5px solid #ECECEC!important;
+    padding-bottom: 10px!important;
+}
+
+/* Fin Estilos para el Shortcode de Breadcrumbs personalizado */
+
+#menu-primer-menu .nav-link-text{
+    text-transform: none !important;
+    color: white!important;
+    font-size: 16px!important;
+}
+
+.elementor-swiper-button{
+    background-color: #0CC!important;
+    border-radius: 100%!important;
+    padding: 8px!important;
+}
+
+.elementor-element-c7132df{
+    padding: 0px!important;
+}
+
+#boton-cotizar .elementor-button {
+  color: #FFFFFF;
+  font-weight: bold;
+  font-size: 16px; 
+  background: linear-gradient(to right, #DE5B45, #F0A74F);
+  padding: 12px 32px;
+  border: none;
+  border-radius: 50px; 
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efecto al pasar el cursor por encima */
+#boton-cotizar .elementor-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15), 0 3px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Efecto al hacer clic */
+#boton-cotizar .elementor-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dialog-close-button{
+    border-radius: 100%!important;
+    padding: 5px!important;
+}
+
+.elementor-popup-modal .dialog-widget-content{
+    background-color: #00000000!important;
+}
+
+.bacs-checkout-container{
+    margin-top: 0px!important;
+}
+
+.bancos_transferecias{
+    padding:6px 0px!important;
+    gap:0px!important;
+}
+
+.img_bancos{
+    object-fit: contain!important;
+}
+
+@media (min-width: 420px) {
+    .bancos_transferecias{
+        padding:6px 6px!important;
+        gap:7px!important;
+    }
+
+    .img_bancos{
+        object-fit: cover!important;
+    }
+}
+
+@media (min-width: 600px) {
+    .bancos_transferecias{
+        padding:10px 10px!important;
+        gap:15px!important;
+    }
+}
+
+#campo_voucher_pago p{
+    margin-bottom: 5px!important;
+}
+
+/* Ocultar la tabla de campos personalizados (Billing Details) */
+.woocommerce-table--custom-fields, .woocommerce-customer-details {
+    display: none !important;
+}
+
+/* Si quieres ocultar específicamente el título que aparece en la tabla */
+.thwcfe-section-title {
+    display: none !important;
+}
+
+/* ====================================================
+   NUNATURA: ESTILO MODERNO PARA SELECT DE VARIACIONES
+   ==================================================== */
+
+/* Contenedor del select */
+.value.cell select {
+    appearance: none !important; /* Elimina la flecha nativa del SO */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    
+    background-color: #ffffff !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px 40px 12px 20px !important; /* Más espacio para el texto */
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    color: #2d3748 !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    
+    /* Flecha personalizada (estilo moderna) */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A0AEC0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 15px center !important;
+    background-size: 18px !important;
+}
+
+/* Efectos al pasar el ratón y foco */
+.value.cell select:hover {
+    border-color: #00C2C7 !important; /* Turquesa Nunatura */
+}
+
+.value.cell select:focus {
+    border-color: #00C2C7 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 4px rgba(0, 194, 199, 0.1) !important;
+}
+
+/* Estilo para el botón de "Limpiar" (Reset variations) */
+.wd-reset-var a.reset_variations {
+    display: inline-block !important;
+    margin-top: 10px !important;
+    font-size: 13px !important;
+    color: #718096 !important;
+    text-decoration: underline !important;
+    text-decoration-color: #cbd5e0 !important;
+    transition: color 0.3s ease !important;
+}
+
+.wd-reset-var a.reset_variations:hover {
+    color: #e53e3e !important; /* Un rojo sutil al pasar el ratón */
+    text-decoration-color: #e53e3e !important;
+}
+
+@media (max-width: 757px) {
+    /* Fuerza el carrusel a 1 columna en móvil */
+    .related-and-upsells .wd-carousel .wd-carousel-wrap {
+        display: flex !important;
+    }
+
+    .related-and-upsells .wd-carousel .wd-carousel-item {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Opcional: ajusta las variables de configuración de WoodMart */
+    .related-and-upsells .wd-carousel {
+        --wd-col-sm: 1 !important;
+        --wd-col-md: 1 !important;
+    }
+}
+
+/* Limitar el ancho de las imágenes del carrusel según el dispositivo */
+@media (max-width: 567px) {
+    .related-products  .swiper-slide-image {
+        max-width: 320px !important;
+        margin: 0 auto; 
+    }
+}
+
+@media (min-width: 568px) and (max-width: 1024px) {
+    .related-products  .swiper-slide-image {
+        max-width: 350px !important;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 1025px) {
+    .related-products  .swiper-slide-image {
+        max-width: 380px !important;
+        margin: 0 auto;
+    }
+}
+
+.related-products .wd-type-bullets{
+    display: none!important;
+}
+
+
+
+.related-products .wd-carousel-inner .wd-prev {
+    margin-right: -9%!important;
+}
+
+
+.related-products .wd-carousel-inner .wd-next {
+    margin-left: -9%!important;
+}
+
+@media (min-width: 758px) {
+    .related-products .wd-carousel-inner .wd-prev {
+        margin-right: -4%!important;
+    }
+
+
+    .related-products .wd-carousel-inner .wd-next {
+        margin-left: -4%!important;
+    }
+}
+
+
+@media (min-width: 1280px) {
+    .related-products .wd-carousel-inner .wd-prev {
+        margin-right: -3%!important;
+    }
+
+
+    .related-products .wd-carousel-inner .wd-next {
+        margin-left: -3%!important;
+    }
+}
+
+@media (min-width: 1920px) {
+    .related-products .wd-carousel-inner .wd-prev {
+        margin-right: -3%!important;
+    }
+
+
+    .related-products .wd-carousel-inner .wd-next {
+        margin-left: -3%!important;
+    }
+}
+
+
+
+/* --- ESTILOS EN ENFOQUE (FOCUS) PARA LOS INPUTS --- */
+
+/* Selecciona los inputs y textareas nativos de Elementor dentro de tu contenedor */
+.page-template-contact .elementor-form-fields-wrapper .elementor-field-textual:focus {
+    border-color: #007070 !important; /* Cambia el borde al verde corporativo oscuro */
+    background-color: #f7fbfb !important; /* Un fondo verde pastel casi imperceptible */
+    outline: none !important; /* Elimina el borde azul feo por defecto del navegador */
+    
+    /* Crea un efecto de brillo suave (Glow) usando el color cyan de tu marca */
+    box-shadow: 0 0 0 4px rgba(0, 204, 204, 0.15) !important; 
+    
+    /* Transición suave para que el cambio no sea brusco */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Transición por defecto para cuando dejas de seleccionar el input */
+.page-template-contact .elementor-form-fields-wrapper .elementor-field-textual {
+    transition: all 0.3s ease-in-out;
+}
+
+/* --- EXTRA: ANIMACIÓN PARA LAS ETIQUETAS (LABELS) --- */
+
+/* Cuando el input está enfocado, cambia el color de su respectivo Label */
+.page-template-contact .elementor-field-group:focus-within .elementor-field-label {
+    color: #007070 !important;
+    font-weight: 600;
+    transform: translateY(-2px); /* Un levísimo movimiento hacia arriba */
+    transition: all 0.3s ease;
+}
+
+.page-template-contact .elementor-field-label {
+    transition: all 0.3s ease;
+}
+
+
+.cotizacion-shortcode-container .disabled-btn {
+    opacity: 0.5;
+    pointer-events: none; /* Evita clics */
+    cursor: not-allowed;
+}
+
+
+/* ====================================================
+   NUNATURA: SELECT MINIMALISTA (.attr-select)
+   ==================================================== */
+
+/* Contenedor padre para dar un respiro */
+.attr-row {
+    margin-top: 15px !important;
+}
+
+/* Etiqueta del campo */
+.attr-row label {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #4a5568 !important;
+    margin-bottom: 8px !important;
+    text-transform: none !important; /* Estricto cumplimiento */
+}
+
+/* Estilo del selector */
+.attr-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important; /* Línea fina y refinada */
+    border-radius: 8px !important; /* Ligeramente redondeado */
+    padding: 12px 40px 12px 15px !important;
+    font-size: 14px !important;
+    color: #333333 !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    
+    line-height: 1!important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px !important;
+}
+
+/* Estado de interacción */
+.attr-select:hover {
+    border-color: #cbd5e0 !important;
+}
+
+.attr-select:focus {
+    outline: none !important;
+    border-color: #00C2C7 !important; /* Acento turquesa Nunatura */
+    box-shadow: 0 0 0 3px rgba(0, 194, 199, 0.08) !important;
+}
+
+/* Estilo para las opciones internas (al abrir el select) */
+.attr-select option {
+    padding: 10px !important;
+    background-color: #ffffff !important;
+    color: #333333 !important;
+}
+
+@media (min-width: 1024px) {
+    .single-product .elementor-widget-image-carousel .elementor-swiper-button{
+        display: none!important;
+    }
+}
+
+
+/* ====================================================
+   NUNATURA: SUBMENÚ DESPLEGABLE MINIMALISTA
+   ==================================================== */
+
+/* Contenedor principal del dropdown / submenú */
+.wd-dropdown-menu.wd-dropdown {
+    background-color: #ffffff !important;
+    border: 1px solid #edf2f7 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06) !important;
+    padding: 0 !important;
+    min-width: 220px !important;
+    /* overflow: hidden!important; */
+}
+
+/* Lista interna de elementos */
+.wd-dropdown-menu .wd-sub-menu {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Elementos individuales (li) */
+.wd-dropdown-menu .wd-sub-menu li {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+
+/* Enlaces del submenú */
+.wd-dropdown-menu .wd-sub-menu li a.woodmart-nav-link {
+    display: block !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    color: #4a5568 !important;
+    text-transform: none !important; /* Estricto cumplimiento: sin mayúsculas */
+    letter-spacing: normal !important;
+    transition: all 0.25s ease !important;
+    background: transparent !important;
+}
+
+/* Estado al pasar el ratón (Hover) - Acento Turquesa Nunatura */
+.wd-dropdown-menu .wd-sub-menu li a.woodmart-nav-link:hover {
+    color: #00C2C7 !important;
+    padding-left: 28px !important; /* Sutil efecto desplazamiento lateral */
+}
+
+.wd-nav>li:is(.wd-has-children,.menu-item-has-children)>a:after{
+	color: white!important;
+	font-size:10px!important;
+	font-weight:600!important;
+	margin-top:2px!important;
+}

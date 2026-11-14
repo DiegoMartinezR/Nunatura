@@ -1,0 +1,84 @@
+/* ====================================================
+   NUNATURA: MENÚ MÓVIL MINIMALISTA REFINADO
+   ==================================================== */
+
+/* Reset de transformaciones globales para asegurar que no haya mayúsculas */
+.mobile-nav, 
+.mobile-nav *, 
+.wd-nav-mob-tab .nav-link-text, 
+.mobile-nav .nav-link-text {
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+.wd-side-hidden-nav {
+    background: #ffffff !important;
+}
+
+/* Espaciado generoso para el buscador */
+.mobile-nav .searchform input[type="text"] {
+    background: #f8f8f8 !important;
+    border-radius: 8px !important;
+    padding: 0px 10px !important;
+    font-size: 14px !important;
+}
+
+
+/* Pestañas: estilo minimalista, solo borde inferior y peso de fuente */
+.wd-nav-mob-tab {
+    background: transparent !important;
+    border-bottom: 1px solid #eeeeee !important;
+    display: flex !important;
+}
+
+.wd-nav-mob-tab li a {
+    padding: 15px 10px !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    color: #999999 !important;
+}
+
+.wd-nav-mob-tab li.wd-active a {
+    color: #333333 !important;
+    font-weight: 600 !important;
+}
+
+/* Menú: tipografía limpia, sin sombras ni fondos cargados */
+.mobile-nav .wd-nav-mobile > li > a {
+    padding: 14px 25px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    color: #444444 !important;
+    border-bottom: none !important;
+}
+
+/* El color turquesa solo como acento en el estado activo/hover */
+.mobile-nav .wd-nav-mobile > li > a:hover {
+    color: #00C2C7 !important;
+    background-color: transparent !important;
+}
+
+/* Iconos de apertura: simplificados a líneas finas */
+.mobile-nav .wd-nav-opener {
+    background-color: transparent !important;
+    width: 30px !important;
+}
+
+
+/* Submenús: sangría clara y tipografía más pequeña para jerarquía */
+.mobile-nav .wd-sub-menu {
+    background-color: #fafafa !important;
+    padding: 10px 0 !important;
+}
+
+.mobile-nav .wd-sub-menu a {
+    padding: 12px 40px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #444444 !important;
+}
+
+/* Eliminación de sombras y bordes decorativos */
+.wd-side-hidden-nav .wd-scroll-content {
+    box-shadow: none !important;
+}

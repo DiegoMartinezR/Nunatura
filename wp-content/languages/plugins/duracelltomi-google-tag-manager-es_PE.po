@@ -1,0 +1,354 @@
+# Translation of Plugins - GTM4WP &#8211; A Google Tag Manager (GTM) plugin for WordPress - Stable (latest release) in Spanish (Peru)
+# This file is distributed under the same license as the Plugins - GTM4WP &#8211; A Google Tag Manager (GTM) plugin for WordPress - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2019-06-12 22:24:05+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.1.0\n"
+"Language: es_PE\n"
+"Project-Id-Version: Plugins - GTM4WP &#8211; A Google Tag Manager (GTM) plugin for WordPress - Stable (latest release)\n"
+
+#: src/Modules/Amp/AdminSchema.php:103
+msgid "Invalid AMP Google Tag Manager Container ID. Valid ID format: GTM-XXXXX. Use comma without additional space (,) to enter more than one ID."
+msgstr "ID de contenedor de Google Tag Manager de AMP no válido. Formato de ID válido: GTM-XXXXX. Utiliza una coma sin espacio adicional (,) para introducir más de un ID."
+
+#: src/Modules/Container/AdminSchema.php:340
+msgid "Turning on this option will load your Google Tag Manager container as early as possible during page load. This can cause issues if you are using jQuery in your custom HTML tags that fire on 'Page View' events."
+msgstr "Si activas esta opción, cargarás el contenedor de Google Tag Manager lo antes posible durante la carga de la página. Esto puede causar problemas si estás utilizando jQuery en las etiquetas HTML personalizadas que se disparan en los eventos de 'páginas vistas '."
+
+#: src/Modules/Container/AdminSchema.php:339
+msgid "Load GTM container as early as possible"
+msgstr "Carga el contenedor GTM lo antes posible"
+
+#: src/Modules/Amp/AdminSchema.php:78
+msgid "Google Tag Manager 'AMP' Container ID"
+msgstr "ID de contenedor de Google Tag Manager 'AMP'"
+
+#: src/Modules/WooCommerce/AdminSchema.php:337
+msgid "Do not flag orders as being tracked"
+msgstr "No marcar los pedidos como rastreados"
+
+#: src/Modules/WooCommerce/AdminSchema.php:180
+msgid "Products per impression"
+msgstr "Productos por impresión"
+
+#: src/Modules/WooCommerce/AdminSchema.php:311
+msgid "Enable this to exclude tax from the revenue variable while generating the purchase data"
+msgstr "Activa esto para excluir impuestos de la variable de ventas al generar los datos de compra"
+
+#: src/Modules/WooCommerce/AdminSchema.php:310
+msgid "Exclude tax from revenue"
+msgstr "Excluir impuestos de las ventas"
+
+#: src/Modules/UserEvents/AdminSchema.php:109
+msgid "Check this option to include a Tag Manager event when an existing user has been logged in on the frontend of your site (admin events not included)"
+msgstr "Marca esta opción para incluir un evento de TAG Manager cuando un usuario existente haya iniciado sesión en la parte pública de tu sitio (eventos admin no incluidos)"
+
+#: src/Modules/UserEvents/AdminSchema.php:108
+msgid "User logged in"
+msgstr "Usuario conectado"
+
+#: src/Modules/UserEvents/AdminSchema.php:99
+msgid "New user registration"
+msgstr "Registro de nuevo usuario"
+
+#: src/Modules/PageVariables/AdminSchema.php:412
+msgid "Check this option to include the IP address of the visitor. You might use this to filter internal traffic inside your GTM container. Please be aware that per GDPR its not allowed to transmit this full IP address to Google Analytics or to any other measurement system without explicit consent from the visitor."
+msgstr "Marca esta opción para incluir la dirección IP del visitante. Puedes usar esto para filtrar el tráfico interno dentro del contenedor GTM. Ten en cuenta que por GDPR no se permite transmitir esta dirección IP completa a Google Analytics o a cualquier otro sistema de medición sin el consentimiento explícito del visitante."
+
+#: src/Modules/PageVariables/AdminSchema.php:411
+msgid "Visitor IP"
+msgstr "IP del visitante"
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: duracelltomi-google-tag-manager-for-wordpress.php
+msgid "https://gtm4wp.com/"
+msgstr "https://gtm4wp.com/"
+
+#: src/Modules/WooCommerce/AdminSchema.php:218
+msgid "Include full category path."
+msgstr "Incluye la ruta de la categoría completa."
+
+#: src/Modules/WooCommerce/AdminSchema.php:282
+msgid "Customer data in data layer"
+msgstr "Datos del cliente en capa de datos"
+
+#: src/Modules/PageVariables/AdminSchema.php:385
+msgid "Check this option to include the username of the logged in user."
+msgstr "Marca esta opción para incluir el nombre del usuario conectado."
+
+#: src/Modules/PageVariables/AdminSchema.php:384
+msgid "Logged in user name"
+msgstr "Nombre de usuario conectado"
+
+#: src/Modules/PageVariables/AdminSchema.php:191
+msgid "Post Format"
+msgstr "Formato de entrada"
+
+#: src/Modules/WooCommerce/ListTracking.php:301
+msgid "Upsell Products"
+msgstr "Productos de venta sugerida"
+
+#: src/Modules/WooCommerce/ListTracking.php:298
+msgid "Cross-Sell Products"
+msgstr "Productos de venta cruzada"
+
+#: src/Modules/PageVariables/AdminSchema.php:403
+msgid "Check this option to include the date of creation (registration) of the logged in user."
+msgstr "Seleccione esta opción para incluir la fecha de creación (registro) del usuario logueado."
+
+#: src/Modules/PageVariables/AdminSchema.php:402
+msgid "Logged in user creation date"
+msgstr "Fecha de creación del usuario logueado"
+
+#: src/Modules/WooCommerce/AdminSchema.php:246
+msgid "Some product feed generator plugins prefix product IDs with a fixed text like 'woocommerce_gpf'. You can enter this prefix here so that tags in your website include this prefix as well."
+msgstr "Algunos plugins del generador de feeds de productos incluyen prefijos con IDs de productos con un texto fijo como por ejemplo 'woocommerce_gpf'. Puede ingresar este prefijo aquí para que las etiquetas de su sitio web también incluyan este prefijo."
+
+#: src/Modules/WooCommerce/AdminSchema.php:245
+msgid "Product ID prefix"
+msgstr "Prefijo de ID de producto"
+
+#: src/Modules/WooCommerce/AdminSchema.php:190
+msgid "Check this to use product SKU instead of the ID of the products for remarketing and ecommerce tracking. Will fallback to ID if no SKU is set."
+msgstr "Selecciona esto para usar el SKU en lugar del ID de los productos para el Remarketing y el seguimiento de comercio electrónico. Si no se establece el SKU cogerá el ID."
+
+#: src/Modules/PageVariables/AdminSchema.php:394
+msgid "Check this option to include the email address of the logged in user."
+msgstr "Selecciona esta opción para incluir la dirección de correo electrónico del usuario logueado."
+
+#: src/Modules/PageVariables/AdminSchema.php:393
+msgid "Logged in user email"
+msgstr "Email del usuario logueado"
+
+#: src/Modules/PageVariables/AdminSchema.php:486
+msgid "Name of the current site in a WordPress Multisite environment"
+msgstr "Nombre del sitio actual en un entorno WordPress Multisitio"
+
+#: src/Modules/PageVariables/AdminSchema.php:485
+msgid "Site name"
+msgstr "Nombre del sitio"
+
+#: src/Modules/PageVariables/AdminSchema.php:477
+msgid "ID of the current site in a WordPress Multisite environment"
+msgstr "ID del sitio actual en un entorno de WordPress Multisitio"
+
+#: src/Modules/PageVariables/AdminSchema.php:476
+msgid "Site ID"
+msgstr "ID del sitio"
+
+#: src/Modules/PageVariables/AdminSchema.php:137
+msgid "Post author ID"
+msgstr "ID del autor del post"
+
+#: src/Modules/WooCommerce/ListTracking.php:316
+msgid "Featured Products"
+msgstr "Productos destacados"
+
+#: src/Modules/WooCommerce/ListTracking.php:313
+msgid "Top Rated Products"
+msgstr "Productos mejor valorados"
+
+#: src/Modules/WooCommerce/ListTracking.php:310
+msgid "Best Selling Products"
+msgstr "Productos más vendidos"
+
+#: src/Modules/WooCommerce/ListTracking.php:307
+msgid "Sale Products"
+msgstr "Productos en oferta"
+
+#: src/Modules/WooCommerce/ListTracking.php:304
+msgid "Recent Products"
+msgstr "Productos recientes"
+
+#: src/Modules/WooCommerce/ListTracking.php:420
+msgid " (widget)"
+msgstr " (widget)"
+
+#: src/Modules/WooCommerce/ListTracking.php:295
+msgid "Related Products"
+msgstr "Productos relacionados"
+
+#: src/Modules/WooCommerce/ListTracking.php:344
+msgid "General Product List"
+msgstr "Lista general de productos"
+
+#: src/Modules/WooCommerce/ListTracking.php:292
+msgid "Search Results"
+msgstr "Resultados de búsqueda"
+
+#: src/Modules/PageVariables/AdminSchema.php:183
+msgid "Check this option to include the post id."
+msgstr "Selecciona esta opción para incluir el ID del post."
+
+#: src/Modules/PageVariables/AdminSchema.php:182
+msgid "Post ID"
+msgstr "ID del post"
+
+#. Author of the plugin
+#: duracelltomi-google-tag-manager-for-wordpress.php
+msgid "Thomas Geiger"
+msgstr "Thomas Geiger"
+
+#. Description of the plugin
+#: duracelltomi-google-tag-manager-for-wordpress.php
+msgid "The first Google Tag Manager plugin for WordPress with business goals in mind"
+msgstr "El primer plugin de Google Tag Manager para WordPress enfocado a objetivos de negocio"
+
+#: src/Admin/PluginRow.php:44
+msgid "Settings"
+msgstr "Ajustes"
+
+#: src/Admin/Notices.php:212
+msgid "Notice: you should deactivate the plugin \"Google Analytics for WordPress by MonsterInsights\" if you are using Google Analytics tags inside Google Tag Manager!"
+msgstr "Aviso: ¡Debes desactivar el plugin \"Google Analytics for WordPress by MonsterInsights\" si estás utilizando etiquetas de Google Analytics dentro de Google Tag Manager!"
+
+#: src/Admin/Notices.php:208
+msgid "Notice: you should deactivate the plugin \"WooCommerce Google Analytics Integration\" if you are using Google Analytics tags inside Google Tag Manager!"
+msgstr "Aviso: ¡Debe desactivar el plugin \"WooCommerce Google Analytics Integration\" si estás utilizando etiquetas de Google Analytics dentro de Google Tag Manager!"
+
+#: src/Modules/MediaEvents/AdminSchema.php:46
+msgid "Media events"
+msgstr "Eventos para Medios"
+
+#: src/Modules/WooCommerce/AdminSchema.php:57
+msgid "WooCommerce"
+msgstr "WooCommerce"
+
+#: src/Admin/SettingsPage.php:110
+msgid "Google Tag Manager"
+msgstr "Google Tag Manager"
+
+#: src/Admin/SettingsPage.php:109
+msgid "Google Tag Manager for WordPress settings"
+msgstr "Ajustes de Google Tag Manager para WordPress"
+
+#: src/Admin/SettingsPage.php:134
+msgid "Google Tag Manager for WordPress options"
+msgstr "Opciones de Google Tag Manager para WordPress"
+
+#: src/Modules/Container/AdminSchema.php:308
+msgid "dataLayer variable name"
+msgstr "Nombre de la variable dataLayer"
+
+#: src/Modules/Container/AdminSchema.php:79
+#: src/Modules/MediaEvents/AdminSchema.php:66
+#: src/Modules/WooCommerce/AdminSchema.php:90
+msgid "Advanced"
+msgstr "Avanzado"
+
+#: src/Modules/UserEvents/AdminSchema.php:64
+msgid "Events"
+msgstr "Eventos"
+
+#: src/Modules/Container/AdminSchema.php:272
+msgid "Container code placement"
+msgstr "Colocación del código del contenedor"
+
+#: src/Modules/Container/AdminSchema.php:78
+#: src/Modules/WooCommerce/AdminSchema.php:86
+msgid "General"
+msgstr "General"
+
+#: src/Modules/UserEvents/AdminSchema.php:54
+msgid "Fire tags in Google Tag Manager on special events on your website"
+msgstr "Activación de etiquetas en Google Tag Manager en eventos especiales de tu sitio web"
+
+#: src/Modules/PageVariables/AdminSchema.php:70
+msgid "Here you can check what data is needed to be included in the dataLayer to be able to access them in Google Tag Manager"
+msgstr "Aquí puedes consultar los datos que serán incluidos en la capa de datos (dataLayer) para poder acceder a ellos mediante Google Tag Manager"
+
+#: src/Modules/WooCommerce/AdminSchema.php:189
+msgid "Use SKU instead of ID"
+msgstr "Usar el SKU en lugar del ID"
+
+#: src/Modules/ContactForm7/AdminSchema.php:46
+#: src/Modules/ContactForm7/AdminSchema.php:65
+#: src/Modules/ContactForm7/AdminSchema.php:80
+msgid "Contact Form 7"
+msgstr "Contact Form 7"
+
+#: src/Modules/MediaEvents/AdminSchema.php:100
+msgid "Soundcloud events"
+msgstr "Eventos para Soundcloud"
+
+#: src/Modules/MediaEvents/AdminSchema.php:91
+msgid "Vimeo video events"
+msgstr "Eventos de video para Vimeo"
+
+#: src/Modules/MediaEvents/AdminSchema.php:81
+msgid "YouTube video events"
+msgstr "Eventos de video para Youtube"
+
+#: src/Modules/ClientDeviceData/AdminSchema.php:89
+msgid "Check this option to include the name and version of the operating system the visitor uses."
+msgstr "Selecciona esta opción para incluir el nombre y la versión del sistema operativo utilizado por el usuario."
+
+#: src/Modules/PageVariables/AdminSchema.php:376
+msgid "Check this option to include the ID of the logged in user."
+msgstr "Selecciona esta opción para incluir el ID del usuario que ha iniciado sesión."
+
+#: src/Modules/PageVariables/AdminSchema.php:375
+msgid "Logged in user ID"
+msgstr "ID del usuario logueado"
+
+#: src/Modules/PageVariables/AdminSchema.php:366
+msgid "Logged in user role"
+msgstr "Rol del usuario logueado"
+
+#: src/Modules/PageVariables/AdminSchema.php:357
+msgid "Logged in status"
+msgstr "Estado logueado"
+
+#: src/Modules/PageVariables/AdminSchema.php:349
+msgid "Check this option to include the search term, referring page URL and number of results on the search page."
+msgstr "Selecciona esta opción para incluir el término de búsqueda, la URL de la página de referencia y el número de resultados en la página de búsqueda."
+
+#: src/Modules/PageVariables/AdminSchema.php:82
+#: src/Modules/PageVariables/AdminSchema.php:348
+msgid "Search data"
+msgstr "Datos de búsqueda"
+
+#: src/Modules/PageVariables/AdminSchema.php:174
+msgid "Check this option to include the count of the posts currently shown on the page and the total number of posts in the category/tag/any taxonomy."
+msgstr "Selecciona esta opción para incluir el recuento de posts que actualmente aparecen en la página y el número total de posts en la categoría/etiqueta/ o cualquier taxonomía."
+
+#: src/Modules/PageVariables/AdminSchema.php:173
+msgid "Post count"
+msgstr "Recuento de posts"
+
+#: src/Modules/PageVariables/AdminSchema.php:165
+msgid "Check this option to include the title of the current post."
+msgstr "Selecciona esta opción para incluir el título del post actual."
+
+#: src/Modules/PageVariables/AdminSchema.php:164
+msgid "Post title"
+msgstr "Título de post"
+
+#: src/Modules/PageVariables/AdminSchema.php:155
+msgid "Post date"
+msgstr "Fecha del post"
+
+#: src/Modules/PageVariables/AdminSchema.php:146
+msgid "Post author name"
+msgstr "Nombre del autor del post"
+
+#: src/Modules/PageVariables/AdminSchema.php:128
+msgid "Tags of current post"
+msgstr "Etiquetas del post actual"
+
+#: src/Modules/PageVariables/AdminSchema.php:108
+msgid "Category list of current post/archive"
+msgstr "Lista de categorías del post/archivo actual"
+
+#: src/Modules/PageVariables/AdminSchema.php:100
+msgid "Check this option to include the type of the current post or archive page (post, page or any custom post type)."
+msgstr "Selecciona esta opción para incluir si la página actual es de tipo Post o Archive (Entrada (post), Página (page) o cualquier Tipo de Contenido Personalizado (Custom Post Type)."
+
+#: src/Modules/PageVariables/AdminSchema.php:99
+msgid "Posttype of current post/archive"
+msgstr "Tipo de contenido (Post Type) de la publicación/archivo actual"

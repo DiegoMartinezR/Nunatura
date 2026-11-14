@@ -1,0 +1,187 @@
+/* ====================================================
+   RECUPERAR CONTRASEÑA (LOST PASSWORD) - NUNATURA
+   ==================================================== */
+
+/* 1. Variables de Color y Sombras */
+form.lost_reset_password {
+    --nuna-cyan: #00C2C7;
+    --nuna-orange: #F07D00;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* 2. Contenedor del Formulario (Tarjeta Flotante) */
+form.lost_reset_password {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    padding: 25px !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+    max-width: 500px !important; /* Tarjeta centrada y elegante */
+    margin: 40px auto !important; /* Centrado horizontal con espacio arriba y abajo */
+}
+
+@media (min-width: 450px) {
+    form.lost_reset_password {
+        padding: 35px !important;
+    }
+}
+
+/* 3. Texto descriptivo ("¿Perdiste tu contraseña?... ") */
+form.lost_reset_password > p:first-child {
+    font-size: 15px !important;
+    color: #666 !important;
+    line-height: 1.6 !important;
+    text-align: center !important; /* Centrado para que luzca ordenado */
+    margin-bottom: 30px !important;
+    font-family: 'Poppins', sans-serif !important;
+}
+
+/* 4. Etiquetas (Labels) y Asterisco */
+form.lost_reset_password label {
+    font-weight: 600 !important;
+    color: #444 !important;
+    font-size: 15px !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+form.lost_reset_password label .required {
+    color: var(--nuna-orange) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+}
+
+/* 5. Caja de Texto (Email/Usuario) */
+form.lost_reset_password .input-text {
+    border-radius: 12px !important;
+    border: 2px solid #edf1f2 !important;
+    background-color: #f9fbfc !important;
+    padding: 16px 20px !important;
+    min-height: 52px !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: none !important;
+    width: 100% !important;
+}
+
+/* Efecto Focus Turquesa */
+form.lost_reset_password .input-text:focus {
+    background-color: #ffffff !important;
+    border-color: var(--nuna-cyan) !important;
+    box-shadow: 0 0 0 4px var(--nuna-cyan-light) !important;
+    outline: none !important;
+}
+
+/* 6. Botón "Restablecer Contraseña" */
+form.lost_reset_password .button {
+    background-color: var(--nuna-cyan) !important;
+    color: #ffffff !important;
+    border-radius: 9999px !important; /* Botón Píldora */
+    padding: 16px 20px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    border: none !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 6px 20px var(--nuna-cyan-light) !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+    margin-top: 15px !important;
+}
+
+/* Animación a Naranja */
+form.lost_reset_password .button:hover {
+    background-color: var(--nuna-orange) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 10px 25px rgba(240, 125, 0, 0.2) !important;
+}
+
+/* ====================================================
+   7. RESPONSIVIDAD PARA PANTALLAS ULTRA ANCHAS (>= 1920px)
+   ==================================================== */
+@media (min-width: 1920px) {
+    form.lost_reset_password { max-width: 580px !important; padding: 50px !important; }
+    form.lost_reset_password > p:first-child { font-size: 17px !important; }
+    form.lost_reset_password label, 
+    form.lost_reset_password .input-text { font-size: 18px !important; }
+    form.lost_reset_password .input-text { min-height: 60px !important; padding: 20px 24px !important; }
+    form.lost_reset_password .button { font-size: 18px !important; padding: 20px !important; }
+}
+
+/* ====================================================
+   CONFIRMACIÓN DE CORREO ENVIADO (LOST PASSWORD)
+   ==================================================== */
+
+/* Aseguramos las variables para esta vista específica */
+body.woocommerce-lost-password {
+    --nuna-cyan: #00C2C7;
+    --nuna-orange: #F07D00;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.08);
+    --nuna-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* 1. Alerta de Éxito (Correo Enviado) */
+body.woocommerce-lost-password .woocommerce > .woocommerce-message {
+    max-width: 500px !important;
+    margin: 40px auto 25px auto !important;
+    border-radius: 12px !important;
+    padding: 18px 25px !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 15px !important;
+    box-shadow: 0 5px 20px var(--nuna-cyan-light) !important;
+    border: none !important;
+    border-left: 5px solid var(--nuna-cyan) !important; /* Borde izquierdo turquesa corporativo */
+    background-color: #ffffff !important; 
+    color: #333 !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Añadir un ícono de check al mensaje para mejor UX */
+body.woocommerce-lost-password .woocommerce > .woocommerce-message::before {
+    content: '✓';
+    color: var(--nuna-cyan);
+    font-weight: 800;
+    font-size: 20px;
+    margin-right: 15px;
+    position: unset!important;
+}
+
+/* 2. Tarjeta con las instrucciones (Párrafo convertido en Card) */
+/* Usamos "> p" para afectar SOLO al texto suelto de confirmación, sin romper el form anterior */
+body.woocommerce-lost-password .woocommerce > p {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    box-shadow: var(--nuna-shadow) !important;
+    padding: 40px !important;
+    border: 1px solid rgba(0,0,0,0.03) !important;
+    max-width: 500px !important;
+    margin: 0 auto 60px auto !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 15px !important;
+    color: #666 !important;
+    line-height: 1.8 !important;
+    text-align: center !important; /* Centrado para que parezca una notificación de App */
+}
+
+/* ====================================================
+   3. RESPONSIVIDAD (PANTALLAS >= 1920px)
+   ==================================================== */
+@media (min-width: 1920px) {
+    body.woocommerce-lost-password .woocommerce > .woocommerce-message,
+    body.woocommerce-lost-password .woocommerce > p {
+        max-width: 580px !important;
+    }
+    body.woocommerce-lost-password .woocommerce > .woocommerce-message {
+        font-size: 17px !important;
+        padding: 22px 30px !important;
+    }
+    body.woocommerce-lost-password .woocommerce > p {
+        font-size: 17px !important;
+        padding: 50px !important;
+    }
+}

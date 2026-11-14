@@ -1,0 +1,191 @@
+/* ====================================================
+   NUNATURA: ESTILOS DEL NUEVO GRID DE RESUMEN DE PEDIDO (ACTUALIZADO)
+   ==================================================== */
+
+.nuna-order-overview-grid {
+    --nuna-cyan: #00C2C7;
+    --nuna-cyan-light: rgba(0, 194, 199, 0.1);
+    
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 20px !important;
+    margin: 40px auto !important;
+    max-width: 1000px !important;
+}
+
+/* 1. Tarjeta individual interactiva (Estado Normal) */
+.nuna-overview-card {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 24px 20px !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03) !important; /* Sombra base muy sutil */
+    border: 1px solid rgba(0, 194, 199, 0.15) !important; /* Borde con un ligero toque turquesa */
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 2. Estado Hover: Animación, sombra pronunciada y borde turquesa sólido */
+.nuna-overview-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 12px 25px rgba(0, 194, 199, 0.15) !important; 
+    border-color: var(--nuna-cyan) !important; 
+}
+
+/* 3. Contenedor del Icono SVG (Ahora con los colores activados por defecto) */
+.nuna-overview-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    background-color: var(--nuna-cyan-light) !important; /* Fondo turquesa claro constante */
+    color: var(--nuna-cyan) !important; /* Icono turquesa constante */
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Agrupación de Textos */
+.nuna-overview-data {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; 
+}
+
+/* 4. Títulos descriptivos (Sin mayúsculas forzadas) */
+.nuna-overview-data span {
+    font-size: 13px !important; 
+    font-weight: 500 !important;
+    color: #888888 !important;
+    text-transform: none !important; /* Cambio aplicado: Formato normal */
+    letter-spacing: 0px !important; /* Eliminamos el espaciado extra que tenían las mayúsculas */
+    margin-bottom: 4px !important;
+    font-family: 'Poppins', sans-serif !important;
+}
+
+.nuna-overview-data strong {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #333333 !important;
+    font-family: 'Poppins', sans-serif !important;
+    word-break: break-word !important;
+}
+
+/* Le damos un toque mínimo al texto del Total para que se lea claro, pero manteniendo la misma tarjeta */
+.nuna-overview-card.total .nuna-overview-data strong {
+    color: var(--nuna-cyan) !important;
+    font-size: 17px !important;
+}
+
+/* ====================================================
+   AJUSTES PARA MÓVILES
+   ==================================================== */
+@media (max-width: 768px) {
+    .nuna-order-overview-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    .nuna-overview-card {
+        padding: 18px 20px !important;
+    }
+}
+
+
+.nuna-overview-data bdi{
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #333333 !important;
+    font-family: 'Poppins', sans-serif !important;
+    word-break: break-word !important;
+}
+
+.nuna-overview-data .woocommerce-Price-currencySymbol{
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #333333 !important;
+    font-family: 'Poppins', sans-serif !important;
+    word-break: break-word !important;
+}
+
+
+
+
+/* ====================================================
+   NUNATURA: ESTILOS DE TABLA DE PRODUCTOS (SOFT UI)
+   ==================================================== */
+
+.woocommerce-order-received .woocommerce-order-details {
+    background: #ffffff !important;
+    padding: 30px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.03) !important;
+}
+
+.woocommerce-order-received .woocommerce-order-details__title {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #333333 !important;
+    margin-bottom: 25px !important;
+}
+
+/* Limpieza de la tabla */
+.woocommerce-order-received .woocommerce-table.shop_table {
+    border: none !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important; /* Espacio entre filas */
+    width: 100% !important;
+}
+
+/* Cabecera de tabla elegante */
+.woocommerce-order-received .woocommerce-table thead th {
+    background: transparent !important;
+    border-bottom: 2px solid #f0f0f0 !important;
+    padding: 10px 15px !important;
+    color: #888888 !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    letter-spacing: 1px !important;
+}
+
+/* Filas de producto */
+.woocommerce-order-received .woocommerce-table tbody tr {
+    background: #f9fbfc !important;
+    border-radius: 12px !important;
+}
+
+.woocommerce-order-received .woocommerce-table td {
+    padding: 20px 15px !important;
+    border-top: none !important;
+}
+
+/* Estilo del producto y cantidad */
+.woocommerce-order-received .product-name a {
+    color: #333333 !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+}
+
+.woocommerce-order-received .product-quantity {
+    color: #00C2C7 !important; /* Turquesa Nunatura */
+    margin-left: 10px !important;
+}
+
+/* Tabla de totales (Footer) */
+.woocommerce-order-received .woocommerce-table tfoot tr th, 
+.woocommerce-order-received .woocommerce-table tfoot tr td {
+    border-top: 1px solid #f0f0f0 !important;
+    padding: 15px !important;
+    font-weight: 500 !important;
+    color: #555555 !important;
+}
+
+/* Fila del Total final (Destacada) */
+.woocommerce-order-received .woocommerce-table tfoot tr:last-child th,
+.woocommerce-order-received .woocommerce-table tfoot tr:last-child td {
+    color: #333333 !important;
+    font-weight: 800 !important;
+    font-size: 15px !important;
+}
