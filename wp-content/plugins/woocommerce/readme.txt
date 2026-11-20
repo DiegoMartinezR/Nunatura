@@ -1,10 +1,10 @@
 === WooCommerce ===
 Contributors: automattic, woocommerce, mikejolley, jameskoster, claudiosanches, rodrigosprimo, peterfabian1000, vedjain, jamosova, obliviousharmony, konamiman, sadowski, wpmuguru, royho, barryhughes-1, claudiulodro, tiagonoronha, ryelle, levinmedia, aljullu, nerrad, joshuawold, assassinateur, haszari, mppfeiffer, nielslange, opr18, ralucastn, tjcafferkey, danielwrobert, patriciahillebrandt, albarin, dinhtungdu, imanish003, karolmanijak, sunyatasattva, alexandrelara, gigitux, danieldudzic, samueljseay, alexflorisca, opr18, tarunvijwani, pauloarromba, saadtarhi, bor0, kloon, coreymckrill, jorgeatorres, leifsinger, neosinner
 Tags: online store, ecommerce, shop, shopping cart, sell online
-Requires at least: 6.9
-Tested up to: 7.0
+Requires at least: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 11.0.0
+Stable tag: 11.3.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -128,7 +128,7 @@ Request new features and extensions and vote on existing suggestions on our offi
 
 = WooCommerce is awesome! Can I contribute? =
 
-Yes, you can! Join in on our [GitHub repository](https://github.com/woocommerce/woocommerce/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) and follow the [development blog](https://woocommerce.wordpress.com/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) to stay up-to-date with everything happening in the project.
+Yes, you can! Join in on our [GitHub repository](https://github.com/woocommerce/woocommerce/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) and follow the [development blog](https://developer.woocommerce.com/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) to stay up-to-date with everything happening in the project.
 
 = Where can I find REST API documentation? =
 
@@ -144,7 +144,7 @@ Check out [Frequently Asked Questions](https://woocommerce.com/document/frequent
 
 * PHP 7.4 or greater is required (PHP 8.0 or greater is recommended)
 * MySQL 5.5.5 or greater, OR MariaDB version 10.1 or greater, is required
-* WordPress 6.9 or greater
+* WordPress 7.0 or greater
 * (Recommended) WordPress [memory limit](https://woocommerce.com/document/increasing-the-wordpress-memory-limit/) of 256 MB or greater.
 * (Recommended) [HTTPS](https://woocommerce.com/document/ssl-and-https/) support.
 
@@ -170,29 +170,71 @@ WooCommerce comes with some sample data you can use to see how products look; im
 
 == Changelog ==
 
-= 11.0.1 2026-08-10 =
+= 11.3.1 2026-11-19 =
 
 **WooCommerce**
 
-* Fix - Fixed admin settings initialization. [#67532](https://github.com/woocommerce/woocommerce/pull/67532)
-* Fix - Fix order list checkbox interactions and responsive layout with WordPress 7.1. [#67364](https://github.com/woocommerce/woocommerce/pull/67364)
-* Fix - Prevent password-protected products from exposing short descriptions before authentication. [#67557](https://github.com/woocommerce/woocommerce/pull/67557)
-* Fix - Sanitize the single dismissible store notice before rendering so entity-encoded HTML in Store API error messages (e.g. a product name) cannot execute script on the Cart and Checkout blocks. [#67476](https://github.com/woocommerce/woocommerce/pull/67476)
-* Fix - Store API: Always resolve the cart token from a consistent place. [#67550](https://github.com/woocommerce/woocommerce/pull/67550)
-* Fix - Store API: improve coupon handling for order payments. [#67549](https://github.com/woocommerce/woocommerce/pull/67549)
-* Fix - Tighten authorization checks on the Marketplace subscription activate endpoint. [#67567](https://github.com/woocommerce/woocommerce/pull/67567)
-* Fix - Tighten authorization checks on the review-order shortcode. [#67552](https://github.com/woocommerce/woocommerce/pull/67552)
-* Fix - Update product button label checks. [#67558](https://github.com/woocommerce/woocommerce/pull/67558)
-* Fix - Update product image SKU match checks [#67530](https://github.com/woocommerce/woocommerce/pull/67530)
-* Fix - Update session cookies hashing [#67408](https://github.com/woocommerce/woocommerce/pull/67408)
-* Fix - Update theme onboarding checks [#67533](https://github.com/woocommerce/woocommerce/pull/67533)
-* Fix - Validate Analytics report export arguments orderby against the target report's schema. [#67551](https://github.com/woocommerce/woocommerce/pull/67551)
-* Fix - Validate the Analytics order date type option against known columns. [#67554](https://github.com/woocommerce/woocommerce/pull/67554)
-* Add - Add a woocommerce_order_step_logging_enabled filter that allows disabling per-order place-order-debug logging without raising the site-wide logging level threshold. [#67410](https://github.com/woocommerce/woocommerce/pull/67410)
-* Dev - Accept the WordPress 7.1 list table check-column markup in the reviews list table row test. [#67517](https://github.com/woocommerce/woocommerce/pull/67517)
-* Dev - Add a PHP_CodeSniffer rule requiring the Store API cart token to be read through CartTokenUtils::get_request_cart_token(). [#67550](https://github.com/woocommerce/woocommerce/pull/67550)
-* Dev - Update the JS file count test for WordPress 7.1. [#67473](https://github.com/woocommerce/woocommerce/pull/67473)
-* Performance - Log writes no longer scan the whole wc-logs directory to locate their target file (the path is now constructed deterministically), and the daily place-order debug log cleanup now deletes a bounded batch per run and reschedules itself until the backlog is drained, instead of stopping at 100 files per day. [#67410](https://github.com/woocommerce/woocommerce/pull/67410)
+* Fix - Apply offline payment gateway shipping method and virtual order restrictions when paying for an existing order through the Store API.
+* Fix - Apply state shipping zones and state tax rates on the classic checkout when the state is entered by name instead of its code.
+* Fix - Apply the right state tax and shipping rates to block checkout orders, and reject states and postcodes that are not valid for the country.
+* Fix - Calculate shipping at checkout when the address town or state is 0.
+* Fix - Checkout link URLs now carry a token that only copies the cart to another browser, without the shopper's details.
+* Fix - Check that order items match their expected type when updating orders via the REST API.
+* Fix - Correct order detail template version numbers for WooCommerce 11.3.1.
+* Fix - Do not name unpublished products, or their attributes, in add to cart errors
+* Fix - Email confirmation links in My Account now ask for the account password before confirming an address.
+* Fix - Ignore user role, capability, and session keys sent as customer metadata through the REST API.
+* Fix - Improve how coupon usage limits per user are counted at checkout.
+* Fix - Improve how the product page reads variation attribute values.
+* Fix - Improve payment handling for existing orders.
+* Fix - Improve permission checks for some order-related REST API endpoints.
+* Fix - Improve the accuracy of held stock counts during checkout.
+* Fix - Keep an unpaid order's coupons when the cart's coupons change before checkout.
+* Fix - Keep a review a moderator unapproved pending when the customer edits it.
+* Fix - Keep coupon discounts within the price of the items they apply to.
+* Fix - Keep coupon usage counts accurate when a coupon is removed from an order.
+* Fix - Keep coupon usage counts accurate when an order is cancelled, failed or trashed.
+* Fix - Keep names with quotes in a single cell when downloading Analytics reports as CSV.
+* Fix - Keep PayPal shipping destinations consistent and hold captured orders until their delivery address is confirmed.
+* Fix - Keep sold-individually products limited to one per order when added through a checkout link.
+* Fix - Match coupon "Allowed emails" entries exactly, with the asterisk (*) as the only wildcard.
+* Fix - Match ZIP+4 postcodes against shipping zones and tax rates limited to their 5-digit ZIP code or a range of 5-digit ZIP codes.
+* Fix - Normalize global attribute names consistently on save.
+* Fix - Normalize product IDs on grouped add-to-cart before validating them
+* Fix - Omit potentially sensitive call arguments from fatal and Store API error logs.
+* Fix - Only show the customer name and billing email on the Review Order page when the customer is signed in.
+* Fix - Only show WooCommerce.com install links to users who can install plugins, and tidy up how WooCommerce.com connection requests are verified.
+* Fix - Preserve registered customer identity when guest orders are imported, deleted or anonymized.
+* Fix - Preserve the approved permissions and credential recipient throughout application authorization.
+* Fix - Prevent concurrent checkout updates from adding unpaid products to completed orders.
+* Fix - Prevent unpublished products from appearing in certain Product Collections
+* Fix - Protect customer account data from untrusted cross-origin cart requests.
+* Fix - Recalculate cart totals after removing all coupons through the Store API.
+* Fix - Refuse checkout when the billing country is missing or outside the store's selling locations.
+* Fix - Reject checkout before processing hooks when customer registration and guest checkout are disabled.
+* Fix - Remove coupons already applied to a cart when coupon codes are disabled in WooCommerce settings.
+* Fix - Require a click before installing payment gateways or enabling automated taxes from setup tasks.
+* Fix - Require a logged-in browser session to get the WordPress.com connection link during WooPayments setup.
+* Fix - Require an active checkout credential for PayPal Standard shipping updates.
+* Fix - Require permission to edit the parent product when managing its attributes and variations.
+* Fix - Require the manage_woocommerce capability for the legacy wc-admin options REST endpoint.
+* Fix - Resolve shortcodes before generating download paths
+* Fix - Respect disabled customer registration settings on My Account and classic checkout.
+* Fix - Safely display customer names in order customer search results.
+* Fix - Sanitize args before queuing deferred emails
+* Fix - Sanitize the Checkout block's terms and conditions text before it is shown to shoppers.
+* Fix - Sanitize variation descriptions imported from CSV files.
+* Fix - Shared cart links now copy only the cart and coupons, not the sharer's checkout details or in-progress order.
+* Fix - Ship block checkout orders to the billing address when the store forces shipping to the customer billing address.
+* Fix - Store API: stop pay for order from accepting a shipping address in a country the store does not ship to.
+* Fix - Strengthen checks before Store API checkout reuses an order awaiting payment.
+* Fix - Strengthen file type checks for downloadable product files.
+* Fix - Strengthen order status checks when paying for an existing order.
+* Fix - Strengthen order tracking access checks.
+* Fix - Strengthen security checks for Store API cart and checkout requests.
+* Fix - Update a shopper's existing order review instead of adding a duplicate, including for orders whose billing email contains special characters or is missing.
+* Fix - Update REST API key authentication for Store API requests.
+* Fix - Verify customer email ownership only with a password credential bound to its emailed recipient.
 
 
 [See changelog for all versions](https://raw.githubusercontent.com/woocommerce/woocommerce/trunk/changelog.txt).

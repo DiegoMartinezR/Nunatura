@@ -11,6 +11,8 @@
  */
 
 use Automattic\WooCommerce\Enums\ProductTaxStatus;
+use Automattic\WooCommerce\Utilities\ArrayUtil;
+use Automattic\WooCommerce\Utilities\MetaDataUtil;
 use Automattic\WooCommerce\Utilities\NumberUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -91,8 +93,13 @@ class WC_Order_Item_Fee extends WC_Order_Item {
 		if ( ! isset( $calculate_tax_for['country'], $calculate_tax_for['state'], $calculate_tax_for['postcode'], $calculate_tax_for['city'] ) ) {
 			return false;
 		}
+
+		// Fee totals may be stored as a blank string (e.g. a fee saved with its value cleared). Coerce to a
+		// float so a non-numeric total is treated as 0, avoiding a TypeError during tax calculation.
+		$total = (float) $this->get_total();
+
 		// Use regular calculation unless the fee is negative.
-		if ( 0 <= $this->get_total() ) {
+		if ( 0 <= $total ) {
 			return parent::calculate_taxes( $calculate_tax_for );
 		}
 
@@ -108,7 +115,7 @@ class WC_Order_Item_Fee extends WC_Order_Item {
 						continue;
 					}
 					$proportion                     = $tax_class_cost / $total_costs;
-					$cart_discount_proportion       = $this->get_total() * $proportion;
+					$cart_discount_proportion       = $total * $proportion;
 					$calculate_tax_for['tax_class'] = $tax_class;
 					$tax_rates                      = WC_Tax::find_rates( $calculate_tax_for );
 					$discount_taxes                 = wc_array_merge_recursive_numeric( $discount_taxes, WC_Tax::calc_tax( $cart_discount_proportion, $tax_rates ) );
@@ -192,34 +199,36 @@ class WC_Order_Item_Fee extends WC_Order_Item {
 	 * @param array $raw_tax_data Raw tax data.
 	 */
 	public function set_taxes( $raw_tax_data ) {
-		$raw_tax_data = maybe_unserialize( $raw_tax_data );
+		$raw_tax_data = MetaDataUtil::maybe_unserialize_no_classes( $raw_tax_data );
 		$tax_data     = array(
 			'total' => array(),
 		);
-		if ( ! empty( $raw_tax_data['total'] ) ) {
+		if ( is_array( $raw_tax_data ) && ! empty( $raw_tax_data['total'] ) ) {
 			$total = $raw_tax_data['total'];
 
-			// Handle legacy data where total might be a float/string instead of an array.
-			if ( ! is_array( $total ) ) {
-				$order = $this->get_order();
-				$total = $this->convert_legacy_tax_value_to_array( $total, $order );
+			if ( is_scalar( $total ) || ArrayUtil::is_flat_scalar_array( $total ) ) {
+				// Handle legacy data where total might be a float/string instead of an array.
+				if ( ! is_array( $total ) ) {
+					$order = $this->get_order();
+					$total = $this->convert_legacy_tax_value_to_array( $total, $order );
 
-				// Log legacy data format for debugging purposes.
-				wc_get_logger()->warning(
-					sprintf(
-						/* translators: %d: order item ID */
-						__( 'Order item #%d contains legacy tax data format. Tax rate ID information is unavailable.', 'woocommerce' ),
-						$this->get_id()
-					),
-					array(
-						'source'        => 'woocommerce-order-item-fee',
-						'order_item_id' => $this->get_id(),
-						'order_id'      => $order ? $order->get_id() : 0,
-					)
-				);
+					// Log legacy data format for debugging purposes.
+					wc_get_logger()->warning(
+						sprintf(
+							/* translators: %d: order item ID */
+							__( 'Order item #%d contains legacy tax data format. Tax rate ID information is unavailable.', 'woocommerce' ),
+							$this->get_id()
+						),
+						array(
+							'source'        => 'woocommerce-order-item-fee',
+							'order_item_id' => $this->get_id(),
+							'order_id'      => $order ? $order->get_id() : 0,
+						)
+					);
+				}
+
+				$tax_data['total'] = array_map( 'wc_format_decimal', $total );
 			}
-
-			$tax_data['total'] = array_map( 'wc_format_decimal', $total );
 		}
 		$this->set_prop( 'taxes', $tax_data );
 

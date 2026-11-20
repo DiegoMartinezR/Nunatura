@@ -2,7 +2,6 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "woocommerce/product-title",
-	"version": "1.0.0",
 	"title": "Product Title",
 	"category": "woocommerce-product-elements",
 	"description": "Display the title of a product.",
@@ -28,8 +27,10 @@
 		"spacing": {
 			"margin": true,
 			"__experimentalSkipSerialization": true
-		},
-		"__experimentalSelector": ".wc-block-components-product-title"
+		}
+	},
+	"selectors": {
+		"root": ".wp-block-woocommerce-product-title .wc-block-components-product-title"
 	},
 	"textdomain": "woocommerce",
 	"attributes": {

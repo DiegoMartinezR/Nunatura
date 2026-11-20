@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitb4efc9e450422f9b6baeb980c352ded3
+class ComposerStaticInit2c69d29269c6a1b33cea76e0fc7b7844
 {
     public static $files = array (
         'a8fea8b4399cbd13660b53857806df1f' => __DIR__ . '/..' . '/elementor/elementor-mcp-composer/runner.php',
@@ -263,9 +263,9 @@ class ComposerStaticInitb4efc9e450422f9b6baeb980c352ded3
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitb4efc9e450422f9b6baeb980c352ded3::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitb4efc9e450422f9b6baeb980c352ded3::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitb4efc9e450422f9b6baeb980c352ded3::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit2c69d29269c6a1b33cea76e0fc7b7844::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit2c69d29269c6a1b33cea76e0fc7b7844::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit2c69d29269c6a1b33cea76e0fc7b7844::$classMap;
 
         }, null, ClassLoader::class);
     }

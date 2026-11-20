@@ -28,6 +28,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WC_REST_Orders_V1_Controller extends WC_REST_Posts_Controller {
 
 	/**
+	 * Maps each order line request argument to the order_item_type stored for it.
+	 *
+	 * @var array<string, string>
+	 */
+	protected const STORED_ITEM_TYPES = array(
+		'line_items'     => 'line_item',
+		'shipping_lines' => 'shipping',
+		'fee_lines'      => 'fee',
+		'coupon_lines'   => 'coupon',
+	);
+
+	/**
 	 * Endpoint namespace.
 	 *
 	 * @var string
@@ -660,6 +672,7 @@ class WC_REST_Orders_V1_Controller extends WC_REST_Posts_Controller {
 		}
 	}
 
+	// phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- This method also throws WC_REST_Exception indirectly through get_product_id().
 	/**
 	 * Create or update a line item.
 	 *
@@ -667,14 +680,58 @@ class WC_REST_Orders_V1_Controller extends WC_REST_Posts_Controller {
 	 * @param string $action 'create' to add line item or 'update' to update it.
 	 *
 	 * @return WC_Order_Item_Product
+	 * @throws WC_Data_Exception Invalid product data.
 	 * @throws WC_REST_Exception Invalid data, server error.
 	 */
 	protected function prepare_line_items( $posted, $action = 'create' ) {
-		$item    = new WC_Order_Item_Product( ! empty( $posted['id'] ) ? $posted['id'] : '' );
-		$product = wc_get_product( $this->get_product_id( $posted, $action ) );
+		$item                 = new WC_Order_Item_Product( ! empty( $posted['id'] ) ? $posted['id'] : '' );
+		$product              = wc_get_product( $this->get_product_id( $posted, $action ) );
+		$current_product_id   = (int) $item->get_product_id( 'edit' );
+		$current_variation_id = (int) $item->get_variation_id( 'edit' );
+		// set_product() clears a variation when given its parent. REST partial updates restore it only
+		// when the posted parent and SKU-resolved product still identify the current item.
+		// An explicit variation_id of 0 still demotes the item.
+		$same_product_update  = 'update' === $action
+			&& array_key_exists( 'product_id', $posted )
+			&& $product instanceof WC_Product
+			&& (int) $posted['product_id'] === $current_product_id
+			&& in_array( $product->get_id(), array( $current_product_id, $current_variation_id ), true );
+		$restore_variation_id = $same_product_update
+			&& $current_variation_id
+			&& ( ! array_key_exists( 'variation_id', $posted ) || (int) $posted['variation_id'] === $current_variation_id );
+		$clear_variation_id   = $same_product_update
+			&& $current_variation_id
+			&& array_key_exists( 'variation_id', $posted )
+			&& 0 === (int) $posted['variation_id'];
+
+		if ( $clear_variation_id && $product instanceof WC_Product_Variation ) {
+			$product = wc_get_product( $current_product_id );
+		}
 
 		if ( $product && $product !== $item->get_product() ) {
 			$item->set_product( $product );
+			if ( $restore_variation_id ) {
+				try {
+					$item->set_variation_id( $current_variation_id );
+				} catch ( WC_Data_Exception $e ) {
+					if ( 'order_item_product_invalid_variation_id' !== $e->getErrorCode() ) {
+						throw $e;
+					}
+					// The stored variation ID no longer identifies a variation. Keep set_product()'s parent demotion.
+					// Unlike v2, no get_post_type() recheck is needed: $item is always a base WC_Order_Item_Product
+					// (never a woocommerce_get_order_item_classname subclass), whose setter throws this code only
+					// when the post is not a product_variation.
+					wc_get_logger()->warning(
+						sprintf(
+							'Order item #%d (order #%d) referenced variation #%d, which no longer exists; the item was demoted to its parent product during a REST update.',
+							$item->get_id(),
+							$item->get_order_id(),
+							$current_variation_id
+						),
+						array( 'source' => 'rest-api' )
+					);
+				}
+			}
 
 			if ( 'create' === $action ) {
 				$quantity = isset( $posted['quantity'] ) ? $posted['quantity'] : 1;
@@ -683,11 +740,16 @@ class WC_REST_Orders_V1_Controller extends WC_REST_Posts_Controller {
 				$item->set_subtotal( $total );
 			}
 		}
+		if ( $clear_variation_id ) {
+			$item->set_variation_id( 0 );
+		}
 
 		$this->maybe_set_item_props( $item, array( 'name', 'quantity', 'total', 'subtotal', 'tax_class' ), $posted );
 
 		return $item;
 	}
+
+	// phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 
 	/**
 	 * Create or update an order shipping method.
@@ -762,7 +824,7 @@ class WC_REST_Orders_V1_Controller extends WC_REST_Posts_Controller {
 	/**
 	 * Wrapper method to create/update order items.
 	 * When updating, the item ID provided is checked to ensure it is associated
-	 * with the order.
+	 * with the order and it's of the correct type.
 	 *
 	 * @param WC_Order $order order
 	 * @param string $item_type
@@ -780,15 +842,18 @@ class WC_REST_Orders_V1_Controller extends WC_REST_Posts_Controller {
 
 		$method = 'prepare_' . $item_type;
 
-		// Verify provided line item ID is associated with order.
+		// Verify provided line item ID is associated with order and matches its stored type.
 		if ( 'update' === $action ) {
 			$result = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}woocommerce_order_items WHERE order_item_id = %d AND order_id = %d",
-				absint( $posted['id'] ),
-				absint( $order->get_id() )
-			) );
+				$wpdb->prepare(
+					"SELECT * FROM {$wpdb->prefix}woocommerce_order_items WHERE order_item_id = %d AND order_id = %d AND order_item_type = %s",
+					absint( $posted['id'] ),
+					absint( $order->get_id() ),
+					static::STORED_ITEM_TYPES[ $item_type ] ?? $item_type
+				)
+			);
 			if ( is_null( $result ) ) {
-				throw new WC_REST_Exception( 'woocommerce_rest_invalid_item_id', __( 'Order item ID provided is not associated with order.', 'woocommerce' ), 400 );
+				throw new WC_REST_Exception( 'woocommerce_rest_invalid_item_id', esc_html__( 'Order item ID provided is not associated with order, or does not match the expected item type.', 'woocommerce' ), 400 );
 			}
 		}
 

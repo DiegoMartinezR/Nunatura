@@ -1,0 +1,25 @@
+2026-11-20T15:05:45+00:00 INFO Automatic database update triggered.
+2026-11-20T15:05:45+00:00 INFO Scheduling database updates (from 11.0.1)...
+2026-11-20T15:05:45+00:00 INFO   [11.1.0] Scheduled 'wc_update_1110_delete_dashboard_outofstock_count_transient'.
+2026-11-20T15:05:45+00:00 INFO   [11.1.0] Scheduled 'wc_update_1110_cleanup_block_email_posts'.
+2026-11-20T15:05:45+00:00 INFO   [11.1.0] Scheduled 'wc_update_1110_flush_product_count_cache'.
+2026-11-20T15:05:45+00:00 INFO   [11.1.0-1] Scheduled 'wc_update_11101_remove_deprecated_variation_gallery_option'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_1120_remove_abandoned_cart_recovery'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_1120_migrate_stock_notifications_alpha_constant'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_1120_delete_surface_cart_checkout_note'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_1120_cleanup_inherited_variation_images'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_11201_migrate_tax_lookup_order_items'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_11201_invalidate_analytics_reports_cache'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_11202_reset_refund_returning_customer_markers'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0] Scheduled 'wc_update_11203_normalize_stock_notification_emails'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.0-1] Scheduled 'wc_update_1040_cleanup_legacy_ptk_patterns_fetching'.
+2026-11-20T15:05:45+00:00 INFO   [11.2.2] Scheduled 'wc_update_1122_remove_objects_from_default_attributes'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.0] Scheduled 'wc_update_1130_set_legacy_variation_price_hash_option'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.0] Scheduled 'wc_update_1130_delete_unpublished_variation_lookup_rows'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.0] Scheduled 'wc_update_1130_split_tax_lookup_taxable_amount'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.0] Scheduled 'wc_update_1130_delete_stock_notification_sync_notice_option'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.0] Scheduled 'wc_update_1130_backfill_order_stats_payment_method'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.0-1] Scheduled 'wc_update_1122_remove_objects_from_default_attributes'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.1] Scheduled 'wc_update_1131_redact_deferred_customer_passwords'.
+2026-11-20T15:05:45+00:00 INFO   [11.3.1] Scheduled 'wc_update_1131_invalidate_postcode_match_caches'.
+2026-11-20T15:05:45+00:00 INFO Database updates scheduled.

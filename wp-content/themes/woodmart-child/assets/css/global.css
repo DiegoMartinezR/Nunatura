@@ -82,3 +82,108 @@
         padding: 14px 22px !important;
     }
 }
+
+/* ====================================================
+   29. ESTILO DE PRECIOS EN CARDS DE PRODUCTOS (NUNATURA)
+   ==================================================== */
+
+/* Contenedor del precio: alineación horizontal lado a lado y centrado */
+.woocommerce ul.products li.product .price,
+.product-grid-item .price,
+.woocommerce div.product p.price,
+.price {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 6px !important;
+}
+
+/* Asegurar que el texto para lectores de pantalla no rompa el diseño */
+.price .screen-reader-text {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* --- 1. PRECIO ANTERIOR / TACHADO (del) --- */
+.woocommerce ul.products li.product .price del,
+.product-grid-item .price del,
+.woocommerce div.product p.price del,
+.price del {
+    color: #007070 !important;
+    font-size: 1.15em !important;
+    font-weight: 800 !important;
+    opacity: 1 !important;
+    text-decoration: none !important; /* Desactiva el tachado nativo del navegador */
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1.2 !important;
+    margin-right: 0 !important;
+}
+
+/* Línea de tachado personalizada centrada horizontal y verticalmente */
+.woocommerce ul.products li.product .price del::after,
+.product-grid-item .price del::after,
+.woocommerce div.product p.price del::after,
+.price del::after {
+    content: "" !important;
+    position: absolute !important;
+    left: -2px !important;
+    right: -2px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    height: 2.5px !important;
+    background-color: #007070 !important;
+    pointer-events: none !important;
+}
+
+/* Elementos internos del precio tachado */
+.price del .woocommerce-Price-amount,
+.price del .woocommerce-Price-currencySymbol,
+.price del bdi {
+    color: #007070 !important;
+    font-weight: 800 !important;
+}
+
+/* --- 2. PRECIO OFERTA / ACTUAL (ins) --- */
+.woocommerce ul.products li.product .price ins,
+.product-grid-item .price ins,
+.woocommerce div.product p.price ins,
+.price ins {
+    color: #F87612 !important;
+    font-size: 1.15em !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1.2 !important;
+}
+
+/* Elementos internos del precio en oferta */
+.price ins .woocommerce-Price-amount,
+.price ins .woocommerce-Price-currencySymbol,
+.price ins bdi {
+    color: #F87612 !important;
+    font-weight: 800 !important;
+}
+
+/* --- 3. PRECIO REGULAR (Cuando el producto NO está en oferta) --- */
+.woocommerce ul.products li.product .price > .woocommerce-Price-amount:only-child,
+.product-grid-item .price > .woocommerce-Price-amount:only-child,
+.price > .woocommerce-Price-amount:not(del *):not(ins *) {
+    color: #007070 !important;
+    font-size: 1.15em !important;
+    font-weight: 800 !important;
+}
